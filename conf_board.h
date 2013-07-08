@@ -1,0 +1,1 @@
+#define CONF_BOARD_USB_PORT

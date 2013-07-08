@@ -1,0 +1,5 @@
+#define CONFIG_SYSCLK_SOURCE        SYSCLK_SRC_PLLACK
+#define CONFIG_SYSCLK_PRES          SYSCLK_PRES_2
+#define CONFIG_PLL0_SOURCE          PLL_SRC_MAINCK_XTAL
+#define CONFIG_PLL0_MUL             16
+#define CONFIG_PLL0_DIV             1
