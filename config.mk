@@ -53,6 +53,7 @@ TARGET_SRAM = device_example_sram.elf
 # List of C source files.
 CSRCS = \
        common/services/clock/sam3u/sysclk.c               \
+       common/services/delay/sam/cycle_counter.c          \
        common/services/sleepmgr/sam/sleepmgr.c            \
        ubuild/main.c \
        ubuild/udi_vendor.c \
@@ -76,6 +77,7 @@ ASSRCS =
 INC_PATH = \
        ubuild \
        common/boards                                      \
+       common/services/delay                              \
        common/services/clock                              \
        common/services/gpio                               \
        common/services/ioport                             \
