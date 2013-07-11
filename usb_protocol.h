@@ -47,7 +47,6 @@
 #ifndef _USB_PROTOCOL_H_
 #define _USB_PROTOCOL_H_
 
-#include "usb_atmel.h"
 
 /**
  * \ingroup usb_group
