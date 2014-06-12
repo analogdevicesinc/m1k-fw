@@ -52,13 +52,13 @@ TARGET_SRAM = device_example_sram.elf
 
 # List of C source files.
 CSRCS = \
+       ubuild/main.c \
        common/services/clock/sam3u/sysclk.c               \
        common/services/delay/sam/cycle_counter.c          \
        common/services/sleepmgr/sam/sleepmgr.c            \
-       ubuild/main.c \
-       ubuild/udi_vendor.c \
-       ubuild/udi_vendor_desc.c \
-       ubuild/udc.c                      \
+       common/services/usb/class/vendor/device/udi_vendor.c \
+       common/services/usb/class/vendor/device/udi_vendor_desc.c \
+       common/services/usb/udc/udc.c                      \
        common/utils/interrupt/interrupt_sam_nvic.c        \
        sam/drivers/pio/pio.c                              \
        sam/drivers/pio/pio_handler.c                      \
@@ -71,7 +71,7 @@ CSRCS = \
        sam/utils/syscalls/gcc/syscalls.c
 
 # List of assembler source files.
-ASSRCS = 
+ASSRCS =
 
 # List of include paths.
 INC_PATH = \
@@ -82,6 +82,10 @@ INC_PATH = \
        common/services/gpio                               \
        common/services/ioport                             \
        common/services/sleepmgr                           \
+       common/services/usb/udc                            \
+       common/services/usb                                \
+       common/services/usb/class/vendor                   \
+       common/services/usb/class/vendor/device            \
        common/utils                                       \
        sam/boards                                         \
        sam/boards/sam3u_ek                                \
@@ -99,12 +103,12 @@ INC_PATH = \
 
 # Additional search paths for libraries.
 LIB_PATH =  \
-       thirdparty/CMSIS/Lib/GCC                          
+       thirdparty/CMSIS/Lib/GCC
 
 # List of libraries to use during linking.
 LIBS =  \
        arm_cortexM3l_math                                 \
-       m                                                 
+       m
 
 # Path relative to top level directory pointing to a linker script.
 LINKER_SCRIPT_FLASH = sam/utils/linker_scripts/sam3u/sam3u2/gcc/flash.ld
@@ -119,20 +123,20 @@ PROJECT_TYPE        = all
 
 # Additional options for debugging. By default the common Makefile.in will
 # add -g3.
-DBGFLAGS = 
+DBGFLAGS =
 
 # Application optimization used during compilation and linking:
 # -O0, -O1, -O2, -O3 or -Os
-OPTIMIZATION = -O1
+OPTIMIZATION = -O2
 
 # Extra flags to use when archiving.
-ARFLAGS = 
+ARFLAGS =
 
 # Extra flags to use when assembling.
-ASFLAGS = 
+ASFLAGS =
 
 # Extra flags to use when compiling.
-CFLAGS = 
+CFLAGS =
 
 # Extra flags to use when preprocessing.
 #

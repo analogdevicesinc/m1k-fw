@@ -65,8 +65,8 @@
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
 
 //! USB Device string definitions (Optional)
-#define  USB_DEVICE_MANUFACTURE_NAME      "ADI and NonoLabs"
-#define  USB_DEVICE_PRODUCT_NAME          "Experimentation"
+#define  USB_DEVICE_MANUFACTURE_NAME      "Analog Devices, Inc."
+#define  USB_DEVICE_PRODUCT_NAME          "Helium"
 // #define  USB_DEVICE_SERIAL_NAME           "123123123123"
 
 /**
@@ -142,7 +142,7 @@
 
 //! The includes of classes and other headers must be done
 //! at the end of this file to avoid compile error
-#include "udi_vendor_conf.h"
+#include <udi_vendor_conf.h>
 #include "main.h"
 
 #endif // _CONF_USB_H_
