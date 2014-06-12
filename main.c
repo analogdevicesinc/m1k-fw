@@ -18,7 +18,7 @@ void init_build_usb_serial_number(void) {
 	flash_read_unique_id(uid, 4);
 	for (uint8_t i = 0; i < 16; i++) {
 		serial_number[i*2] = "0123456789ABCDEF"[((uint8_t *)uid)[i]&0x0F];
-		serial_number[i*2+1] = "0123456789ABCDEF"[((uint8_t *)uid)[i]&0xF0 >> 4];
+		serial_number[i*2+1] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
 	}
 	serial_number[32] = 0;
 }
