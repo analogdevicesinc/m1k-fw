@@ -53,7 +53,7 @@
  */
 
 //! Device definition (mandatory)
-#define  USB_DEVICE_VENDOR_ID             0x59e3
+#define  USB_DEVICE_VENDOR_ID             0x0456
 #define  USB_DEVICE_PRODUCT_ID            0xf000
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
