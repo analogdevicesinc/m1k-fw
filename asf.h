@@ -104,4 +104,7 @@
 // From module: pio_handler support enabled
 #include <pio_handler.h>
 
+#include <flash_efc.h>
+#include <efc.h>
+
 #endif // ASF_H

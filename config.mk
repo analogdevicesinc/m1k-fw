@@ -1,43 +1,5 @@
-#
-# Copyright (c) 2011 Atmel Corporation. All rights reserved.
-#
-# \asf_license_start
-#
-# \page License
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-# 1. Redistributions of source code must retain the above copyright notice,
-#    this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
-#
-# 3. The name of Atmel may not be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# 4. This software may only be redistributed and used in connection with an
-#    Atmel microcontroller product.
-#
-# THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
-# EXPRESSLY AND SPECIFICALLY DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
-# \asf_license_stop
-#
-
 # Path to top level ASF directory relative to this project directory.
-PRJ_PATH = ..
+PRJ_PATH = ../asf
 
 # Target CPU architecture: cortex-m3, cortex-m4
 ARCH = cortex-m3
@@ -47,12 +9,12 @@ PART = sam3u2c
 
 # Application target name. Given with suffix .a for library and .elf for a
 # standalone application.
-TARGET_FLASH = device_example_flash.elf
-TARGET_SRAM = device_example_sram.elf
+TARGET_FLASH = helium.elf
+TARGET_SRAM = helium_sram.elf
 
 # List of C source files.
 CSRCS = \
-       ubuild/main.c \
+       ../ubuild/main.c \
        common/services/clock/sam3u/sysclk.c               \
        common/services/delay/sam/cycle_counter.c          \
        common/services/sleepmgr/sam/sleepmgr.c            \
@@ -61,10 +23,12 @@ CSRCS = \
        common/services/usb/udc/udc.c                      \
        common/utils/interrupt/interrupt_sam_nvic.c        \
        sam/drivers/pio/pio.c                              \
+       sam/drivers/efc/efc.c                              \
        sam/drivers/pio/pio_handler.c                      \
        sam/drivers/pmc/pmc.c                              \
        sam/drivers/pmc/sleep.c                            \
        sam/drivers/udphs/udphs_device.c                   \
+       sam/services/flash_efc/flash_efc.c                  \
        sam/utils/cmsis/sam3u/source/templates/exceptions.c \
        sam/utils/cmsis/sam3u/source/templates/gcc/startup_sam3u.c \
        sam/utils/cmsis/sam3u/source/templates/system_sam3u.c \
@@ -75,7 +39,7 @@ ASSRCS =
 
 # List of include paths.
 INC_PATH = \
-       ubuild \
+       ../ubuild \
        common/boards                                      \
        common/services/delay                              \
        common/services/clock                              \
@@ -90,6 +54,8 @@ INC_PATH = \
        sam/boards                                         \
        sam/boards/sam3u_ek                                \
        sam/drivers/pio                                    \
+       sam/services/flash_efc                              \
+       sam/drivers/efc                                    \
        sam/drivers/pmc                                    \
        sam/drivers/udphs                                  \
        sam/utils                                          \
@@ -99,7 +65,6 @@ INC_PATH = \
        sam/utils/preprocessor                             \
        thirdparty/CMSIS/Include                           \
        thirdparty/CMSIS/Lib/GCC \
-       common/services/usb/class/vendor/device/example/sam3u4e_sam3u_ek/gcc
 
 # Additional search paths for libraries.
 LIB_PATH =  \
@@ -112,7 +77,7 @@ LIBS =  \
 
 # Path relative to top level directory pointing to a linker script.
 LINKER_SCRIPT_FLASH = sam/utils/linker_scripts/sam3u/sam3u2/gcc/flash.ld
-LINKER_SCRIPT_SRAM  = sam/utils/linker_scripts/sam3u/sam3u4/gcc/sram.ld
+LINKER_SCRIPT_SRAM  = sam/utils/linker_scripts/sam3u/sam3u2/gcc/sram.ld
 
 # Path relative to top level directory pointing to a linker script.
 DEBUG_SCRIPT_FLASH = sam/boards/sam3u_ek/debug_scripts/gcc/sam3u_ek_flash.gdb
