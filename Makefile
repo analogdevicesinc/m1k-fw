@@ -2,7 +2,7 @@ flash: cleanLocal all
 	sudo /usr/local/bin/bossac -e -w -v -b helium.bin
 
 cleanLocal:
-	rm -f *bin *elf *hex *lss *map *sym
+	rm -f *bin *elf *hex *lss *map *sym *o *d
 
 HW_PRODUCT=ADI Helium
 HW_VERSION=0
