@@ -29,19 +29,21 @@ void init_build_usb_serial_number(void) {
 
 int main(void)
 {
-	irq_initialize_vectors();
-	cpu_irq_enable();
-	init_build_usb_serial_number();
-	sysclk_init();
-	//board_init();
-
 	// enable LED
 	pio_configure_pin(PIO_PA5_IDX, PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT);
 	pio_configure_pin(PIO_PA3_IDX, PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT);
 	pio_set_pin_low(PIO_PA3_IDX);
 	
+	irq_initialize_vectors();
+	cpu_irq_enable();
+	//init_build_usb_serial_number();
+	sysclk_init();
+	//board_init();
+
 	// start USB
 	udc_start();
+	cpu_delay_us(100, F_CPU);
+	udc_attach();
 	wdt_disable(WDT);
 	while (true) {
 		cpu_delay_us(10, F_CPU);
@@ -59,6 +61,7 @@ void main_sof_action(void) {
 }
 
 bool main_vendor_enable(void) {
+	pio_toggle_pin(PIO_PA5_IDX);
 	main_b_vendor_enable = true;
 	// Start data reception on OUT endpoints
 	main_vendor_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
