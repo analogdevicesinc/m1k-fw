@@ -27,8 +27,13 @@ extern uint8_t serial_number[];
 
 #define UDI_VENDOR_ENABLE_EXT()           main_vendor_enable()
 #define UDI_VENDOR_DISABLE_EXT()          main_vendor_disable()
-#define UDI_VENDOR_SETUP_OUT_RECEIVED()   main_setup_out_received()
-#define UDI_VENDOR_SETUP_IN_RECEIVED()    main_setup_in_received()
+
+// why would you want to handle interface control requests?
+#define UDI_VENDOR_SETUP_OUT_RECEIVED()   false
+#define UDI_VENDOR_SETUP_IN_RECEIVED()    false
+
+// why would you not want to handle everything else?
+#define USB_DEVICE_SPECIFIC_REQUEST()     main_setup_handle()
 
 #define UDI_VENDOR_EPS_SIZE_INT_FS    0
 #define UDI_VENDOR_EPS_SIZE_BULK_FS   64

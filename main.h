@@ -32,14 +32,12 @@ void main_resume_action(void);
  *
  * \retval true if request accepted
  */
-bool main_setup_out_received(void);
+bool main_setup_handle(void);
 
 /*! \brief Manage the reception of setup request IN
  *
  * \retval true if request accepted
  */
-bool main_setup_in_received(void);
-
 void init_build_usb_serial_number(void);
 
 #endif // _MAIN_H_
