@@ -22,8 +22,8 @@ void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
 	flash_read_unique_id(uid, 4);
 	for (uint8_t i = 0; i < 16; i++) {
-		serial_number[i*2] = "0123456789ABCDEF"[((uint8_t *)uid)[i]&0x0F];
-		serial_number[i*2+1] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
+		serial_number[i*2+1] = "0123456789ABCDEF"[((uint8_t *)uid)[i]&0x0F];
+		serial_number[i*2] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
 	}
 	serial_number[32] = 0;
 }
@@ -38,8 +38,8 @@ int main(void)
 	cpu_irq_enable();
 	sysclk_init();
 	// enable WDT for "fairly short"
+	init_build_usb_serial_number();
 	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
-
 	// start USB
 	udc_start();
 	cpu_delay_us(100, F_CPU);
