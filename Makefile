@@ -1,5 +1,5 @@
 flash: cleanLocal all
-	/usr/local/bin/bossac -p /dev/ttyACM0 -e -w -v -b helium.bin
+	sudo /usr/local/bin/bossac -e -w -v -b helium.bin
 
 cleanLocal:
 	rm -f *bin *elf *hex *lss *map *sym
