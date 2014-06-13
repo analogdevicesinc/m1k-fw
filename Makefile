@@ -49,11 +49,11 @@
 # Include the common Makefile, which will also include the project specific
 # config.mk file.
 cleanLocal:
-	rm -f *bin *elf *hex *lss *map *sym
+	rm -f *bin *elf *hex *lss *map *sym *o *d
 
 flash:
 	make all
-	rumba /dev/ttyACM0 flashmcu device_example_flash.bin
+	sudo /usr/local/bin/bossac -e -w -v -b device_example_flash.bin
 
 MAKEFILE_PATH = Makefile.sam.in
 include $(MAKEFILE_PATH)
