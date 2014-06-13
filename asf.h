@@ -107,5 +107,5 @@
 #include <flash_efc.h>
 #include <efc.h>
 #include <sam/cycle_counter.h>
-
+#include <wdt.h>
 #endif // ASF_H
