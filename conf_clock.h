@@ -3,3 +3,4 @@
 #define CONFIG_PLL0_SOURCE          PLL_SRC_MAINCK_XTAL
 #define CONFIG_PLL0_MUL             16
 #define CONFIG_PLL0_DIV             1
+#define F_CPU	(CONFIG_PLL0_MUL)*(12000000)/2
