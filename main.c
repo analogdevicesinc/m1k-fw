@@ -2,10 +2,14 @@
 #include "conf_usb.h"
 
 static bool main_b_vendor_enable = false;
+#define STRINGIFY(x)            #x
 
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
+const char hwversion[] = STRINGIFY(HW_VERSION);
+const char fwversion[] = STRINGIFY(FW_VERSION);
+const char gitversion[] = STRINGIFY(GIT_VERSION);
 
-#define  MAIN_LOOPBACK_SIZE    1024
+#define  MAIN_LOOPBACK_SIZE    512
 static uint8_t main_buf_loopback[MAIN_LOOPBACK_SIZE];
 
 void main_vendor_bulk_in_received(udd_ep_status_t status,
@@ -28,51 +32,44 @@ int main(void)
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	init_build_usb_serial_number();
-	// Initialize the sleep manager
-	sleepmgr_init();
 	sysclk_init();
 	//board_init();
 
-	// Start USB stack to authorize VBus monitoring
+	// enable LED
+	pio_configure_pin(PIO_PA5_IDX, PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT);
+	pio_configure_pin(PIO_PA3_IDX, PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT);
+	pio_set_pin_low(PIO_PA3_IDX);
+	
+	// start USB
 	udc_start();
-
-	// The main loop manages only the power mode
-	// because the USB management is done by interrupt
+	wdt_disable(WDT);
 	while (true) {
-		sleepmgr_enter_sleep();
+		cpu_delay_us(10, F_CPU);
 	}
 }
 
-void main_suspend_action(void)
-{
-}
+void main_suspend_action(void) { }
 
-void main_resume_action(void)
-{
-}
+void main_resume_action(void) { }
 
-void main_sof_action(void)
-{
+void main_sof_action(void) {
 	if (!main_b_vendor_enable)
 		return;
 	//udd_get_frame_number()
 }
 
-bool main_vendor_enable(void)
-{
+bool main_vendor_enable(void) {
 	main_b_vendor_enable = true;
 	// Start data reception on OUT endpoints
 	main_vendor_bulk_in_received(UDD_EP_TRANSFER_OK, 0, 0);
 	return true;
 }
 
-void main_vendor_disable(void)
-{
+void main_vendor_disable(void) {
 	main_b_vendor_enable = false;
 }
 
-bool main_setup_out_received(void)
-{
+bool main_setup_out_received(void) {
 	udd_g_ctrlreq.payload = main_buf_loopback;
 	udd_g_ctrlreq.payload_size = min(
 			udd_g_ctrlreq.req.wLength,
@@ -80,12 +77,49 @@ bool main_setup_out_received(void)
 	return true;
 }
 
-bool main_setup_in_received(void)
-{
-	udd_g_ctrlreq.payload = main_buf_loopback;
-	udd_g_ctrlreq.payload_size =
-			min( udd_g_ctrlreq.req.wLength,
-			sizeof(main_buf_loopback) );
+bool main_setup_in_received(void) {
+	if (Udd_setup_is_in()) {
+	if (Udd_setup_type() == USB_REQ_TYPE_VENDOR) {
+		switch (udd_g_ctrlreq.req.bRequest) {
+			case 0x00: { // Info
+				uint8_t* ptr = 0;
+				uint16_t size = 0;
+				switch(udd_g_ctrlreq.req.wIndex){
+					case 0:
+						ptr = (uint8_t*)hwversion;
+						size = sizeof(hwversion);
+						break;
+					case 1:
+						ptr = (uint8_t*)fwversion;
+						size = sizeof(fwversion);
+						break;
+					case 2:
+						ptr = (uint8_t*)gitversion;
+						size = sizeof(gitversion);
+						break;
+				}
+				udd_g_ctrlreq.payload = ptr;
+				udd_g_ctrlreq.payload_size = size;
+				return true;
+			}
+			case 0x01: {
+				pio_toggle_pin(PIO_PA5_IDX);
+				return true;
+			}
+			case 0xBB: {
+				flash_clear_gpnvm(1);
+				udd_g_ctrlreq.payload_size = 0;
+				return true;
+				/*udc_stop();
+				cpu_delay_ms(100, F_CPU);
+				udc_detach();
+				cpu_delay_ms(100, F_CPU);
+				void (*enter_bootloader)(void) = (void*) 0x60000; // 0x180000 / 4
+				enter_bootloader();*/
+			}
+		}
+	}
+	}
 	return true;
 }
 
