@@ -61,6 +61,7 @@
 #include <ioport.h>
 #include <interrupt.h>
 #include <pio.h>
+#include <twi.h>
 
 #include <usart.h>
 #include <pmc.h>

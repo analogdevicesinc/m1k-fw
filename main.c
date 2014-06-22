@@ -26,8 +26,17 @@ static  usart_spi_opt_t USART_SPI_DAC =
 	.channel_mode  = US_MR_CHMODE_NORMAL
 };
 
-#define  MAIN_LOOPBACK_SIZE    512
-static uint8_t main_buf_loopback[MAIN_LOOPBACK_SIZE];
+static twi_options_t TWIM_CONFIG =
+{
+	.master_clk = F_CPU,
+	.speed = 100000,
+	.chip = 0,
+	.smbus = 0,
+};
+
+
+
+static uint8_t main_buf_loopback[512];
 
 void main_vendor_bulk_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
@@ -110,12 +119,17 @@ void hardware_init(void) {
 // CHB_OUT_1Mo
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB8, PIO_DEFAULT);
 
+// devboard LED
 	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA5, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
-	
+
+// 1MHz SPI
 	usart_init_spi_master(USART0, &USART_SPI_DAC, 1000000);
 	usart_init_spi_master(USART1, &USART_SPI_ADC, 1000000);
 	usart_init_spi_master(USART2, &USART_SPI_ADC, 1000000);
+
+// 100khz I2C
+	twi_master_init(TWI0, &TWIM_CONFIG);
 }
 
 int main(void)
@@ -123,6 +137,10 @@ int main(void)
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	sysclk_init();
+	// enable peripheral clock access
+	pmc_enable_periph_clk(ID_PIOA);
+	pmc_enable_periph_clk(ID_PIOB);
+	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
 	// enable WDT for "fairly short"
 	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
@@ -227,4 +245,3 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 			nb_transfered,
 			main_vendor_bulk_in_received);
 }
-
