@@ -47,71 +47,71 @@ void init_build_usb_serial_number(void) {
 void hardware_init(void) {
 
 // PWR
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB17);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
 
 // SDA
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
 // SCL
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA10A_TWCK0);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA10A_TWCK0, PIO_DEFAULT);
 
 // LDAC_N
-	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA14);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA14, PIO_DEFAULT);
 // CLR_N
-	pio_set_peripheral(PIOA, PIO_OUTPUT_1, PIO_PA15);
+	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA15, PIO_DEFAULT);
 // SYNC_N
-	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA16);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA16, PIO_DEFAULT);
 // DAC_CLK
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA17A_SCK0);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA17A_SCK0, PIO_DEFAULT);
 // DAC_MOSI
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA18A_TXD0);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA18A_TXD0, PIO_DEFAULT);
 
 // CHA_ADC_MISO
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA21A_RXD1);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA21A_RXD1, PIO_DEFAULT);
 // CHA_ADC_MOSI
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA20A_TXD1);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA20A_TXD1, PIO_DEFAULT);
 // CHA_ADC_CLK
-	pio_set_peripheral(PIOB, PIO_PERIPH_B, PIO_PA24B_SCK1);
+	pio_configure(PIOB, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
 
 // ADC_CNV
-	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA26);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA26, PIO_DEFAULT);
 
 // CHB_ADC_MISO
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2, PIO_DEFAULT);
 // CHB_ADC_MOSI
-	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA23A_RXD2);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA23A_RXD2, PIO_DEFAULT);
 // CHB_ADC_CLK
-	pio_set_peripheral(PIOB, PIO_PERIPH_B, PIO_PA25B_SCK2);
+	pio_configure(PIOB, PIO_PERIPH_B, PIO_PA25B_SCK2, PIO_DEFAULT);
 
 // CHA_SWMODE
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB19);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB19, PIO_DEFAULT);
 // CHB_SWMODE
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB20);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB20, PIO_DEFAULT);
 
 // CHA_SAFE_SWITCH
-	pio_set_peripheral(PIOB, PIO_INPUT, PIO_PB4);
+	pio_configure(PIOB, PIO_INPUT, PIO_PB4, PIO_DEFAULT);
 // CHB_SAFE_SWITCH
-	pio_set_peripheral(PIOB, PIO_INPUT, PIO_PB18);
+	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
 
 // CHA_OUT_DETECT
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB0);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0, PIO_DEFAULT);
 // CHA_OUT_50o
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB1);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB1, PIO_DEFAULT);
 // CHA_OUT_10k
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB2);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
 // CHA_OUT_1Mo
-	pio_set_peripheral(PIOB, PIO_OUTPUT_1, PIO_PB3);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB3, PIO_DEFAULT);
 
 // CHB_OUT_DETECT
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB5);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB5, PIO_DEFAULT);
 // CHB_OUT_50o
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB6);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB6, PIO_DEFAULT);
 // CHB_OUT_10k
-	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB7);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB7, PIO_DEFAULT);
 // CHB_OUT_1Mo
-	pio_set_peripheral(PIOB, PIO_OUTPUT_1, PIO_PB8);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB8, PIO_DEFAULT);
 
-	pio_set_peripheral(PIOA, PIO_OUTPUT_1, PIO_PA5);
-	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA3);
+	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA5, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
 	
 	usart_init_spi_master(USART0, &USART_SPI_DAC, 1000000);
 	usart_init_spi_master(USART1, &USART_SPI_ADC, 1000000);
