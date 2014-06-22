@@ -28,6 +28,7 @@ CSRCS = \
        sam/drivers/wdt/wdt.c                              \
        sam/drivers/pmc/pmc.c                              \
        sam/drivers/pmc/sleep.c                            \
+       sam/drivers/usart/usart.c                          \
        sam/drivers/udphs/udphs_device.c                   \
        sam/services/flash_efc/flash_efc.c                  \
        sam/utils/cmsis/sam3u/source/templates/exceptions.c \
@@ -55,11 +56,12 @@ INC_PATH = \
        sam/boards                                         \
        sam/boards/sam3u_ek                                \
        sam/drivers/pio                                    \
-       sam/services/flash_efc                              \
+       sam/services/flash_efc                             \
        sam/drivers/efc                                    \
        sam/drivers/pmc                                    \
        sam/drivers/wdt                                    \
        sam/drivers/udphs                                  \
+       sam/drivers/usart                                  \
        sam/utils                                          \
        sam/utils/cmsis/sam3u/include                      \
        sam/utils/cmsis/sam3u/source/templates             \

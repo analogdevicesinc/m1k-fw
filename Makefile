@@ -1,5 +1,8 @@
 flash: cleanLocal all
+	- python -c "import usb;usb.core.find(idVendor=0x0456,idProduct=0xcee2).ctrl_transfer(0x40|0x80, 0xBB, 0, 0, 1)"
 	sudo /usr/local/bin/bossac -e -w -v -b helium.bin
+	sleep 1
+	- sudo python -c "import serial, glob; ser = serial.Serial(glob.glob(\"/dev/ttyACM*\")[0], 115200); ser.write(\"G00000000#\")"
 
 cleanLocal:
 	rm -f *bin *elf *hex *lss *map *sym *o *d

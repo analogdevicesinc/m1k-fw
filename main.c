@@ -10,6 +10,22 @@ const char hwversion[] = STRINGIFY(HW_VERSION);
 const char fwversion[] = STRINGIFY(FW_VERSION);
 const char gitversion[] = STRINGIFY(GIT_VERSION);
 
+static  usart_spi_opt_t USART_SPI_ADC =
+{
+	.baudrate     = 1000000,
+	.char_length   = 8,
+	.spi_mode      = SPI_MODE_0,
+	.channel_mode  = US_MR_CHMODE_NORMAL
+};
+
+static  usart_spi_opt_t USART_SPI_DAC =
+{
+	.baudrate     = 1000000,
+	.char_length   = 8,
+	.spi_mode      = SPI_MODE_1,
+	.channel_mode  = US_MR_CHMODE_NORMAL
+};
+
 #define  MAIN_LOOPBACK_SIZE    512
 static uint8_t main_buf_loopback[MAIN_LOOPBACK_SIZE];
 
@@ -27,19 +43,91 @@ void init_build_usb_serial_number(void) {
 	}
 	serial_number[32] = 0;
 }
+
+void hardware_init(void) {
+
+// PWR
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB17);
+
+// SDA
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0);
+// SCL
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA10A_TWCK0);
+
+// LDAC_N
+	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA14);
+// CLR_N
+	pio_set_peripheral(PIOA, PIO_OUTPUT_1, PIO_PA15);
+// SYNC_N
+	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA16);
+// DAC_CLK
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA17A_SCK0);
+// DAC_MOSI
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA18A_TXD0);
+
+// CHA_ADC_MISO
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA21A_RXD1);
+// CHA_ADC_MOSI
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA20A_TXD1);
+// CHA_ADC_CLK
+	pio_set_peripheral(PIOB, PIO_PERIPH_B, PIO_PA24B_SCK1);
+
+// ADC_CNV
+	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA26);
+
+// CHB_ADC_MISO
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2);
+// CHB_ADC_MOSI
+	pio_set_peripheral(PIOA, PIO_PERIPH_A, PIO_PA23A_RXD2);
+// CHB_ADC_CLK
+	pio_set_peripheral(PIOB, PIO_PERIPH_B, PIO_PA25B_SCK2);
+
+// CHA_SWMODE
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB19);
+// CHB_SWMODE
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB20);
+
+// CHA_SAFE_SWITCH
+	pio_set_peripheral(PIOB, PIO_INPUT, PIO_PB4);
+// CHB_SAFE_SWITCH
+	pio_set_peripheral(PIOB, PIO_INPUT, PIO_PB18);
+
+// CHA_OUT_DETECT
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB0);
+// CHA_OUT_50o
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB1);
+// CHA_OUT_10k
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB2);
+// CHA_OUT_1Mo
+	pio_set_peripheral(PIOB, PIO_OUTPUT_1, PIO_PB3);
+
+// CHB_OUT_DETECT
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB5);
+// CHB_OUT_50o
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB6);
+// CHB_OUT_10k
+	pio_set_peripheral(PIOB, PIO_OUTPUT_0, PIO_PB7);
+// CHB_OUT_1Mo
+	pio_set_peripheral(PIOB, PIO_OUTPUT_1, PIO_PB8);
+
+	pio_set_peripheral(PIOA, PIO_OUTPUT_1, PIO_PA5);
+	pio_set_peripheral(PIOA, PIO_OUTPUT_0, PIO_PA3);
+	
+	usart_init_spi_master(USART0, &USART_SPI_DAC, 1000000);
+	usart_init_spi_master(USART1, &USART_SPI_ADC, 1000000);
+	usart_init_spi_master(USART2, &USART_SPI_ADC, 1000000);
+}
+
 int main(void)
 {
-	// enable LED
-	pio_configure_pin(PIO_PA5_IDX, PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT);
-	pio_configure_pin(PIO_PA3_IDX, PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT);
-	pio_set_pin_low(PIO_PA3_IDX);
-	
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	sysclk_init();
-	// enable WDT for "fairly short"
 	init_build_usb_serial_number();
+	// enable WDT for "fairly short"
 	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
+	// setup peripherals
+	hardware_init();
 	// start USB
 	udc_start();
 	cpu_delay_us(100, F_CPU);

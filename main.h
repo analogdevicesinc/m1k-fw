@@ -40,4 +40,5 @@ bool main_setup_handle(void);
  */
 void init_build_usb_serial_number(void);
 
+
 #endif // _MAIN_H_

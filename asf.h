@@ -56,52 +56,25 @@
 #include <compiler.h>
 #include <status_codes.h>
 
-// From module: GPIO - General purpose Input/Output
 #include <gpio.h>
-
-// From module: Generic board support
 #include <board.h>
-
-// From module: IOPORT - General purpose I/O service
 #include <ioport.h>
-
-// From module: Interrupt management - SAM implementation
 #include <interrupt.h>
-
-// From module: PIO - Parallel Input/Output Controller
 #include <pio.h>
 
-// From module: PMC - Power Management Controller
+#include <usart.h>
 #include <pmc.h>
 #include <sleep.h>
-
-// From module: Part identification macros
 #include <parts.h>
-
-// From module: SAM3U EK LED support enabled
 #include <led.h>
-
-// From module: SAM3U startup code
 #include <exceptions.h>
-
-// From module: Sleep manager - SAM implementation
 #include <sam/sleepmgr.h>
 #include <sleepmgr.h>
-
-// From module: System Clock Control - SAM3U implementation
 #include <sysclk.h>
-
-// From module: USB Device Stack Core (Common API)
 #include <udc.h>
 #include <udd.h>
-
-// From module: USB Device Vendor Class (Single Interface Device)
 #include <udi_vendor.h>
-
-// From module: USB Vendor Protocol
 #include <usb_protocol_vendor.h>
-
-// From module: pio_handler support enabled
 #include <pio_handler.h>
 
 #include <flash_efc.h>
