@@ -2,14 +2,13 @@
 #include "conf_usb.h"
 
 static bool main_b_vendor_enable = false;
-#define STRINGIFY(x)            #x
-
+#define stringify(x)            #x
+#define xstringify(s) stringify(s)
 bool reset = false;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 uint8_t ret_data[64];
-const char hwversion[] = STRINGIFY(HW_VERSION);
-const char fwversion[] = STRINGIFY(FW_VERSION);
-const char gitversion[] = STRINGIFY(GIT_VERSION);
+const char hwversion[] = xstringify(HW_VERSION);
+const char fwversion[] = xstringify(FW_VERSION);
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
@@ -34,8 +33,6 @@ static twi_options_t TWIM_CONFIG =
 	.chip = 0, // master
 	.smbus = 0,
 };
-
-
 
 static uint8_t main_buf_loopback[512];
 
@@ -227,10 +224,6 @@ bool main_setup_handle(void) {
 					case 1:
 						ptr = (uint8_t*)fwversion;
 						size = sizeof(fwversion);
-						break;
-					case 2:
-						ptr = (uint8_t*)gitversion;
-						size = sizeof(gitversion);
 						break;
 				}
 				break;
