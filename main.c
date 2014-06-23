@@ -14,15 +14,15 @@ const char gitversion[] = STRINGIFY(GIT_VERSION);
 static  usart_spi_opt_t USART_SPI_ADC =
 {
 	.baudrate     = 1000000,
-	.char_length   = 8,
+	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_0,
 	.channel_mode  = US_MR_CHMODE_NORMAL
 };
 
 static  usart_spi_opt_t USART_SPI_DAC =
 {
-	.baudrate     = 1000000,
-	.char_length   = 8,
+	.baudrate     = 100000,
+	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_1,
 	.channel_mode  = US_MR_CHMODE_NORMAL
 };
@@ -55,6 +55,13 @@ void init_build_usb_serial_number(void) {
 }
 
 void hardware_init(void) {
+// enable peripheral clock access
+	pmc_enable_periph_clk(ID_PIOA);
+	pmc_enable_periph_clk(ID_PIOB);
+	pmc_enable_periph_clk(ID_TWI0);
+	pmc_enable_periph_clk(ID_USART0);
+	pmc_enable_periph_clk(ID_USART1);
+	pmc_enable_periph_clk(ID_USART2);
 
 // PWR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
@@ -69,7 +76,7 @@ void hardware_init(void) {
 // CLR_N
 	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA15, PIO_DEFAULT);
 // SYNC_N
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA16, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA16, PIO_DEFAULT);
 // DAC_CLK
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA17A_SCK0, PIO_DEFAULT);
 // DAC_MOSI
@@ -103,42 +110,62 @@ void hardware_init(void) {
 	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
 
 // CHA_OUT_CONNECT
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0, PIO_DEFAULT);
 // CHA_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB1, PIO_DEFAULT);
 // CHA_OUT_10KSER
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB2, PIO_DEFAULT);
 // CHA_OUT_1MOPAR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB3, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 
 // CHB_OUT_CONNECT
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB5, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB5, PIO_DEFAULT);
 // CHB_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB6, PIO_DEFAULT);
 // CHB_OUT_10KSER
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB7, PIO_DEFAULT);
 // CHB_OUT_1MOPAR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB8, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB8, PIO_DEFAULT);
 
 // devboard LED
 	//pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA5, PIO_DEFAULT);
 	//pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
 
 // 1MHz SPI
-	usart_init_spi_master(USART0, &USART_SPI_DAC, 1000000);
-	usart_init_spi_master(USART1, &USART_SPI_ADC, 1000000);
-	usart_init_spi_master(USART2, &USART_SPI_ADC, 1000000);
+	usart_init_spi_master(USART0, &USART_SPI_DAC, F_CPU);
+	usart_enable_tx(USART0);
+	usart_init_spi_master(USART1, &USART_SPI_ADC, F_CPU);
+	usart_enable_tx(USART1);
+	usart_enable_rx(USART1);
+	usart_init_spi_master(USART2, &USART_SPI_ADC, F_CPU);
+	usart_enable_tx(USART2);
+	usart_enable_rx(USART2);
 
 // 100khz I2C
 	twi_reset(TWI0);
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
-// enable peripheral clock access
-	pmc_enable_periph_clk(ID_TWI0);
-	pmc_enable_periph_clk(ID_USART0);
-	pmc_enable_periph_clk(ID_USART1);
-	pmc_enable_periph_clk(ID_USART2);
+}
+
+void set_loop_bw(uint8_t ch, uint8_t r1, uint8_t r2) {
+	twi_packet_t p;
+	uint8_t d[4];
+	d[0] = 0x10;
+	d[1] = r1&0x7f;
+	if (ch == 97) {
+		p.chip = 0x2f; // chA
+	}
+	if (ch == 98) {
+		p.chip = 0x23; // chB
+	}
+	p.addr_length = 1;
+	p.buffer = &d;
+	p.length = 2;
+	twi_master_write(TWI0, &p);
+	d[1] = 0x11;
+	d[1] = r2&0x7f;
+	twi_master_write(TWI0, &p);
 }
 
 int main(void)
@@ -183,6 +210,8 @@ void main_vendor_disable(void) {
 	main_b_vendor_enable = false;
 }
 
+	
+
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
 	uint16_t size = 1;
@@ -210,7 +239,7 @@ bool main_setup_handle(void) {
 				Pio *p_pio = (Pio *)((uint32_t)PIOA + (PIO_DELTA * ((udd_g_ctrlreq.req.wValue&0xFF) >> 5)));
 				ret_data[0] = (p_pio->PIO_ODSR & (1 << (udd_g_ctrlreq.req.wValue& 0x1F))) != 0;
 				ptr = ret_data;
-				size = 4;
+				size = 1;
 				break;
 			}
 			case 0x0E: {
@@ -220,6 +249,18 @@ bool main_setup_handle(void) {
 			case 0xBB: {
 				flash_clear_gpnvm(1);
 				reset = true;
+				break;
+			}
+			case 0x50: {
+				uint8_t c = udd_g_ctrlreq.req.wValue&0xFF;
+				usart_putchar(USART0, c);
+				break;
+			}
+			case 0x1B: {
+				uint8_t r1 = udd_g_ctrlreq.req.wValue&0xFF;
+				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
+				uint8_t ch = udd_g_ctrlreq.req.wIndex&0xFF;
+				set_loop_bw(ch, r1, r2);
 				break;
 			}
 			case 0x5C: {
