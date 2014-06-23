@@ -6,6 +6,7 @@ static bool main_b_vendor_enable = false;
 
 bool reset = false;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
+uint8_t ret_data[64];
 const char hwversion[] = STRINGIFY(HW_VERSION);
 const char fwversion[] = STRINGIFY(FW_VERSION);
 const char gitversion[] = STRINGIFY(GIT_VERSION);
@@ -28,9 +29,9 @@ static  usart_spi_opt_t USART_SPI_DAC =
 
 static twi_options_t TWIM_CONFIG =
 {
-	.master_clk = F_CPU,
-	.speed = 100000,
-	.chip = 0,
+	.master_clk = F_CPU, // main CPU speed
+	.speed = 100000, // 100KHz -> normal speed i2c
+	.chip = 0, // master
 	.smbus = 0,
 };
 
@@ -56,7 +57,7 @@ void init_build_usb_serial_number(void) {
 void hardware_init(void) {
 
 // PWR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
 
 // SDA
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
@@ -101,27 +102,27 @@ void hardware_init(void) {
 // CHB_SAFE_SWITCH
 	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
 
-// CHA_OUT_DETECT
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0, PIO_DEFAULT);
-// CHA_OUT_50o
+// CHA_OUT_CONNECT
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
+// CHA_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB1, PIO_DEFAULT);
-// CHA_OUT_10k
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
-// CHA_OUT_1Mo
+// CHA_OUT_10KSER
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB2, PIO_DEFAULT);
+// CHA_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB3, PIO_DEFAULT);
 
-// CHB_OUT_DETECT
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB5, PIO_DEFAULT);
-// CHB_OUT_50o
+// CHB_OUT_CONNECT
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB5, PIO_DEFAULT);
+// CHB_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB6, PIO_DEFAULT);
-// CHB_OUT_10k
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB7, PIO_DEFAULT);
-// CHB_OUT_1Mo
+// CHB_OUT_10KSER
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB7, PIO_DEFAULT);
+// CHB_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB8, PIO_DEFAULT);
 
 // devboard LED
-	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA5, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
+	//pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA5, PIO_DEFAULT);
+	//pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
 
 // 1MHz SPI
 	usart_init_spi_master(USART0, &USART_SPI_DAC, 1000000);
@@ -129,7 +130,15 @@ void hardware_init(void) {
 	usart_init_spi_master(USART2, &USART_SPI_ADC, 1000000);
 
 // 100khz I2C
+	twi_reset(TWI0);
+	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
+
+// enable peripheral clock access
+	pmc_enable_periph_clk(ID_TWI0);
+	pmc_enable_periph_clk(ID_USART0);
+	pmc_enable_periph_clk(ID_USART1);
+	pmc_enable_periph_clk(ID_USART2);
 }
 
 int main(void)
@@ -137,9 +146,6 @@ int main(void)
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	sysclk_init();
-	// enable peripheral clock access
-	pmc_enable_periph_clk(ID_PIOA);
-	pmc_enable_periph_clk(ID_PIOB);
 	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
 	// enable WDT for "fairly short"
@@ -201,12 +207,19 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0x01: {
-				pio_toggle_pin(PIO_PA5_IDX);
+				pio_toggle_pin(PIO_PB6_IDX);
 				break;
 			}
 			case 0xBB: {
 				flash_clear_gpnvm(1);
 				reset = true;
+				break;
+			}
+			case 0x5C: {
+				int32_t x = twi_probe(TWI0, udd_g_ctrlreq.req.wIndex&0xFF) == TWI_SUCCESS;
+				ret_data[0] = x;
+				ptr = ret_data;
+				size = 4;
 				break;
 			}
 		}
