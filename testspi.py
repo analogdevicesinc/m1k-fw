@@ -1,0 +1,9 @@
+import usb,sys
+
+dev = usb.core.find(idVendor=0x0456,idProduct=0xcee2)
+dev.set_interface_altsetting(0,1)
+dev.ctrl_transfer(0x40|0x80, 0x0e, 16, 0, 4) # toggle sync
+dev.ctrl_transfer(0x40|0x80, 0x50, 0x20, 0, 1) # disable command for 5663 0x200023
+dev.ctrl_transfer(0x40|0x80, 0x50, 0x00, 0, 1)
+dev.ctrl_transfer(0x40|0x80, 0x50, 0x23, 0, 1)
+dev.ctrl_transfer(0x40|0x80, 0x0e, 16, 0, 4) # toggle sync

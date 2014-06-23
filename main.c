@@ -150,21 +150,21 @@ void hardware_init(void) {
 
 void set_loop_bw(uint8_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
-	uint8_t d[4];
-	d[0] = 0x10;
-	d[1] = r1&0x7f;
+	uint8_t v;
 	if (ch == 97) {
 		p.chip = 0x2f; // chA
 	}
 	if (ch == 98) {
 		p.chip = 0x23; // chB
 	}
+	p.length = 1;
 	p.addr_length = 1;
-	p.buffer = &d;
-	p.length = 2;
+	p.buffer = &v;
+	p.addr[0] = 0x10;
+	v = r1&0x7f;
 	twi_master_write(TWI0, &p);
-	d[1] = 0x11;
-	d[1] = r2&0x7f;
+	p.addr[0] = 0x11;
+	v = r2&0x7f;
 	twi_master_write(TWI0, &p);
 }
 
