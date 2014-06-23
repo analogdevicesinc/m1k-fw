@@ -207,10 +207,9 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0xEE: {
-				Pio *p_pio = (Pio *)((uint32_t)PIOA + (PIO_DELTA * (ul_pin >> 5)));
-				uint32_t x = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
-				ret_data[0] = (x > 0);
-				ptr = (uint8_t*)&ret_data;
+				Pio *p_pio = (Pio *)((uint32_t)PIOA + (PIO_DELTA * ((udd_g_ctrlreq.req.wValue&0xFF) >> 5)));
+				ret_data[0] = (p_pio->PIO_ODSR & (1 << (udd_g_ctrlreq.req.wValue& 0x1F))) != 0;
+				ptr = ret_data;
 				size = 4;
 				break;
 			}
