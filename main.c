@@ -20,7 +20,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 
 static  usart_spi_opt_t USART_SPI_DAC =
 {
-	.baudrate     = 100000,
+	.baudrate     = 1000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_1,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -40,6 +40,8 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_vendor_bulk_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep);
+
+void disable_dac(void);
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -124,10 +126,6 @@ void hardware_init(void) {
 // CHB_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB8, PIO_DEFAULT);
 
-// devboard LED
-	//pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA5, PIO_DEFAULT);
-	//pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
-
 // 1MHz SPI
 	usart_init_spi_master(USART0, &USART_SPI_DAC, F_CPU);
 	usart_enable_tx(USART0);
@@ -143,6 +141,16 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
+	disable_dac();
+}
+
+void disable_dac(void) {
+	pio_toggle_pin(16);
+	usart_putchar(USART0, 0x20);
+	usart_putchar(USART0, 0x00);
+	usart_putchar(USART0, 0x23);
+	cpu_delay_us(30, F_CPU);
+	pio_toggle_pin(16);
 }
 
 void set_loop_bw(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -247,6 +255,10 @@ bool main_setup_handle(void) {
 			case 0x50: {
 				uint8_t c = udd_g_ctrlreq.req.wValue&0xFF;
 				usart_putchar(USART0, c);
+				break;
+			}
+			case 0xDD: {
+				disable_dac();
 				break;
 			}
 			case 0x1B: {
