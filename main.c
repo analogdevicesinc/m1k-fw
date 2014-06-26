@@ -20,7 +20,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 
 static  usart_spi_opt_t USART_SPI_DAC =
 {
-	.baudrate     = 1000000,
+	.baudrate     = 500000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_1,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -35,13 +35,6 @@ static twi_options_t TWIM_CONFIG =
 };
 
 static uint8_t main_buf_loopback[512];
-
-void main_vendor_bulk_in_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
-void main_vendor_bulk_out_received(udd_ep_status_t status,
-		iram_size_t nb_transfered, udd_ep_id_t ep);
-
-void disable_dac(void);
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -63,7 +56,7 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART2);
 
 // PWR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
 
 // SDA
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
@@ -149,7 +142,8 @@ void disable_dac(void) {
 	usart_putchar(USART0, 0x20);
 	usart_putchar(USART0, 0x00);
 	usart_putchar(USART0, 0x23);
-	cpu_delay_us(30, F_CPU);
+	// wait till TXEMPTY condition
+	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
 	pio_toggle_pin(16);
 }
 
