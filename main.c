@@ -134,20 +134,35 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
-	disable_dac();
+	setup_dac();
 }
 
-void disable_dac(void) {
-	pio_toggle_pin(16);
+void setup_dac(void) {
+//	write_dac(0x5, 0x0, 0x23); // sleep
+	/*pio_toggle_pin(16);
 	usart_putchar(USART0, 0x20);
 	usart_putchar(USART0, 0x00);
 	usart_putchar(USART0, 0x23);
 	// wait till TXEMPTY condition
 	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
 	pio_toggle_pin(16);
+*/
 }
 
-void set_loop_bw(uint8_t ch, uint8_t r1, uint8_t r2) {
+void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
+	uint8_t b[3];
+	pio_toggle_pin(16);
+	b[0] = cmd << 3 | addr;
+	b[1] = val >> 8;
+	b[2] = val >> 8;
+	usart_putchar(USART0, b[0]);
+	usart_putchar(USART0, b[1]);
+	usart_putchar(USART0, b[2]);
+	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
+	pio_toggle_pin(16);
+}
+
+void set_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
 	uint8_t v;
 	if (ch == 97) {
@@ -251,15 +266,19 @@ bool main_setup_handle(void) {
 				usart_putchar(USART0, c);
 				break;
 			}
-			case 0xDD: {
-				disable_dac();
+			case 0x3D: {
+				uint8_t cmd = udd_g_ctrlreq.req.wIndex&0xFF;
+				uint8_t addr = (udd_g_ctrlreq.req.wIndex>>8)&0xFF;
+//				cmd = 0x2; // write&latch
+//				addr = 0x7; // everything
+				write_dac(cmd, addr, udd_g_ctrlreq.req.wValue);
 				break;
 			}
 			case 0x1B: {
 				uint8_t r1 = udd_g_ctrlreq.req.wValue&0xFF;
 				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
 				uint8_t ch = udd_g_ctrlreq.req.wIndex&0xFF;
-				set_loop_bw(ch, r1, r2);
+				set_pots(ch, r1, r2);
 				break;
 			}
 			case 0x5C: {
