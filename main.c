@@ -201,8 +201,11 @@ int main(void)
 	// setup peripherals
 	hardware_init();
 	// start USB
+
+	udc_detach();
+	udc_stop();
 	udc_start();
-	cpu_delay_us(100, F_CPU);
+	cpu_delay_us(10, F_CPU);
 	udc_attach();
 	while (true) {
 		cpu_delay_us(10, F_CPU);
@@ -231,7 +234,7 @@ void main_vendor_disable(void) {
 	main_b_vendor_enable = false;
 }
 
-	
+
 
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;

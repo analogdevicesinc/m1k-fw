@@ -90,7 +90,7 @@ DEBUG_SCRIPT_FLASH = sam/boards/sam3u_ek/debug_scripts/gcc/sam3u_ek_flash.gdb
 DEBUG_SCRIPT_SRAM  = sam/boards/sam3u_ek/debug_scripts/gcc/sam3u_ek_sram.gdb
 
 # Project type parameter: all, sram or flash
-PROJECT_TYPE        = all
+PROJECT_TYPE        = flash
 
 # Additional options for debugging. By default the common Makefile.in will
 # add -g3.
