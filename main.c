@@ -12,7 +12,7 @@ const char fwversion[] = xstringify(FW_VERSION);
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
-	.baudrate     = 1000000,
+	.baudrate     = 8000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_0,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -79,17 +79,17 @@ void hardware_init(void) {
 // CHA_ADC_MOSI
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA20A_TXD1, PIO_DEFAULT);
 // CHA_ADC_CLK
-	pio_configure(PIOB, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
 
 // ADC_CNV
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA26, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA26, PIO_DEFAULT);
 
 // CHB_ADC_MISO
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2, PIO_DEFAULT);
 // CHB_ADC_MOSI
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA23A_RXD2, PIO_DEFAULT);
 // CHB_ADC_CLK
-	pio_configure(PIOB, PIO_PERIPH_B, PIO_PA25B_SCK2, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA25B_SCK2, PIO_DEFAULT);
 
 // CHA_SWMODE
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB19, PIO_DEFAULT);
@@ -139,18 +139,10 @@ void hardware_init(void) {
 
 void setup_dac(void) {
 //	write_dac(0x5, 0x0, 0x23); // sleep
-	/*pio_toggle_pin(16);
-	usart_putchar(USART0, 0x20);
-	usart_putchar(USART0, 0x00);
-	usart_putchar(USART0, 0x23);
-	// wait till TXEMPTY condition
-	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
-	pio_toggle_pin(16);
-*/
 }
 
 void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
-	uint8_t b[3];
+	uint32_t b[3];
 	pio_toggle_pin(16);
 	b[0] = cmd << 3 | addr;
 	b[1] = val >> 8;
@@ -160,6 +152,21 @@ void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
 	usart_putchar(USART0, b[2]);
 	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
 	pio_toggle_pin(16);
+}
+
+uint32_t read_adc(uint16_t cmd) {
+	// RAC
+	uint32_t hb, lb;
+	pio_toggle_pin(26);
+	usart_putchar(USART1, cmd >> 8);
+	while(!((USART1->US_CSR & US_CSR_TXEMPTY) > 0));
+	usart_read(USART1, &hb);
+	usart_putchar(USART1, cmd & 0xff);
+	while(!((USART1->US_CSR & US_CSR_TXEMPTY) > 0));
+	usart_read(USART1, &lb);
+	uint32_t x = (hb << 8 | lb);
+	pio_toggle_pin(26);
+	return x;
 }
 
 void set_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -269,8 +276,6 @@ bool main_setup_handle(void) {
 			case 0x3D: {
 				uint8_t cmd = udd_g_ctrlreq.req.wIndex&0xFF;
 				uint8_t addr = (udd_g_ctrlreq.req.wIndex>>8)&0xFF;
-//				cmd = 0x2; // write&latch
-//				addr = 0x7; // everything
 				write_dac(cmd, addr, udd_g_ctrlreq.req.wValue);
 				break;
 			}
@@ -279,6 +284,15 @@ bool main_setup_handle(void) {
 				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
 				uint8_t ch = udd_g_ctrlreq.req.wIndex&0xFF;
 				set_pots(ch, r1, r2);
+				break;
+			}
+			case 0xAD: {
+				uint16_t cmd = udd_g_ctrlreq.req.wIndex;
+				uint16_t val = read_adc(cmd);
+				ret_data[0] = val&0xff;
+				ret_data[1] = val >> 8;
+				ptr = ret_data;
+				size = 2;
 				break;
 			}
 			case 0x5C: {
