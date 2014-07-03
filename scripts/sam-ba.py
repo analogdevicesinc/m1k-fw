@@ -36,12 +36,11 @@ def putStr(x):
 	return dev.write(0x01, x, 1, 100)
 
 # erase flash
-cmd = "W400E0804,5A000005#"
-putStr(cmd)
+putStr("W400E0804,5A000005#")
 time.sleep(0.1)
 getStr()
-cmd = "w400E0808,4#"
-putStr(cmd)
+# check if flash is erased
+putStr("w400E0808,4#")
 time.sleep(0.01)
 getStr()
 getStr()
@@ -49,6 +48,7 @@ getStr()
 
 page = 0
 
+# write each word
 for pos in xrange(0,fw.length/8,4):
 	fw.bytepos = pos
 	addr = hex(flashBase+pos).lstrip("0x").rstrip("L").zfill(8)
@@ -63,13 +63,14 @@ for pos in xrange(0,fw.length/8,4):
 		quit()
 	# if at end of page
 	if pos & 0xFC == 0xFC:
+		# write page
 		cmd = "W400E0804,5A00"+hex(page).lstrip("0x").zfill(2)+"03#"
 		putStr(cmd)
 		time.sleep(0.01)
 		getStr()
 		getStr()
-		cmd = "w400E0808,4#"
-		putStr(cmd)
+		# check that page is written
+		putStr("w400E0808,4#")
 		time.sleep(0.01)
 		getStr()
 		getStr()
@@ -77,10 +78,10 @@ for pos in xrange(0,fw.length/8,4):
 		page += 1
 
 
-cmd = "W400E0804,5A00010B#",
+# disable SAM-BA
+putStr("W400E0804,5A00010B#")
 
-putStr(cmd)
-
+# jump to flash
 putStr("G00080000#")
 
 print "good to go!"
