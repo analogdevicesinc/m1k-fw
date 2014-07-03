@@ -12,7 +12,7 @@ const char fwversion[] = xstringify(FW_VERSION);
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
-	.baudrate     = 8000000,
+	.baudrate     = 24000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_0,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -20,7 +20,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 
 static  usart_spi_opt_t USART_SPI_DAC =
 {
-	.baudrate     = 500000,
+	.baudrate     = 8000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_1,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -28,13 +28,15 @@ static  usart_spi_opt_t USART_SPI_DAC =
 
 static twi_options_t TWIM_CONFIG =
 {
-	.master_clk = F_CPU, // main CPU speed
-	.speed = 100000, // 100KHz -> normal speed i2c
-	.chip = 0, // master
+	.master_clk = F_CPU,
+	.speed = 100000,
+	.chip = 0,
 	.smbus = 0,
 };
 
-static uint8_t main_buf_loopback[512];
+static uint32_t main_buf[1024];
+uint16_t* sample_view = (uint16_t*)main_buf;
+uint8_t* main_buf_loopback = (uint8_t*)main_buf;
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -102,11 +104,11 @@ void hardware_init(void) {
 	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
 
 // CHA_OUT_CONNECT
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
 // CHA_OUT_50OPAR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB1, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
 // CHA_OUT_10KSER
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB2, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
 // CHA_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 
@@ -119,7 +121,6 @@ void hardware_init(void) {
 // CHB_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB8, PIO_DEFAULT);
 
-// 1MHz SPI
 	usart_init_spi_master(USART0, &USART_SPI_DAC, F_CPU);
 	usart_enable_tx(USART0);
 	usart_init_spi_master(USART1, &USART_SPI_ADC, F_CPU);
@@ -134,11 +135,6 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
-	setup_dac();
-}
-
-void setup_dac(void) {
-//	write_dac(0x5, 0x0, 0x23); // sleep
 }
 
 void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
@@ -169,14 +165,29 @@ uint32_t read_adc(uint16_t cmd) {
 	return x;
 }
 
-void set_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
+void read_adcs(uint32_t count, uint16_t* out) {
+	for (uint32_t i = 0; i < count; i++) {
+		pio_toggle_pin(26);
+		for (uint32_t j = 0; j < 2; j++) {
+			while(!((USART1->US_CSR & US_CSR_TXRDY) > 0));
+			USART1->US_THR = US_THR_TXCHR(0);
+			while(!((USART1->US_CSR & US_CSR_RXRDY) > 0));
+			main_buf_loopback[i*2+j] = USART1->US_RHR & US_RHR_RXCHR_Msk;
+		}
+		while(!((USART1->US_CSR & US_CSR_TXEMPTY) > 0));
+		pio_toggle_pin(26);
+		cpu_delay_us(2, F_CPU);
+	}
+}
+
+void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
 	uint8_t v;
-	if (ch == 97) {
-		p.chip = 0x2f; // chA
+	if (ch == 'a') {
+		p.chip = 0x2f;
 	}
-	if (ch == 98) {
-		p.chip = 0x23; // chB
+	if (ch == 'b') {
+		p.chip = 0x23;
 	}
 	p.length = 1;
 	p.addr_length = 1;
@@ -208,9 +219,11 @@ int main(void)
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
 	while (true) {
-		cpu_delay_us(10, F_CPU);
+		cpu_delay_us(100, F_CPU);
 		if (!reset)
 			wdt_restart(WDT);
+		if (reset)
+			udc_detach();
 	}
 }
 
@@ -286,7 +299,7 @@ bool main_setup_handle(void) {
 				uint8_t r1 = udd_g_ctrlreq.req.wValue&0xFF;
 				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
 				uint8_t ch = udd_g_ctrlreq.req.wIndex&0xFF;
-				set_pots(ch, r1, r2);
+				write_pots(ch, r1, r2);
 				break;
 			}
 			case 0xAD: {
@@ -296,6 +309,13 @@ bool main_setup_handle(void) {
 				ret_data[1] = val >> 8;
 				ptr = ret_data;
 				size = 2;
+				break;
+			}
+			case 0xA4: {
+				uint32_t ct = udd_g_ctrlreq.req.wIndex;
+				read_adcs(ct, sample_view);
+				size = ct*2;
+				ptr = main_buf_loopback;
 				break;
 			}
 			case 0x5C: {
