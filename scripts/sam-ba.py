@@ -76,9 +76,11 @@ for pos in xrange(0,fw.length/8,4):
 		getStr()
 		page += 1
 
-# disable SAM-BA: 0x5a000000 | (1 << 8) | 0x0b) < 0)
-#dev.write(0x01, "W400E0804,5A00010B#", 1, 100)
-# last thing - jump to flash
+
+cmd = "W400E0804,5A00010B#",
+
+putStr(cmd)
+
 putStr("G00080000#")
 
 print "good to go!"
