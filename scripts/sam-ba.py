@@ -9,9 +9,11 @@ import glob
 import time
 import usb
 
+print "please wait..."
+
 raw = open("./helium.bin").read()
 raw += '\x00'*(256-len(raw)%256)
-print len(raw)
+
 fw = bitstring.ConstBitStream(bytes=raw)
 
 dev = usb.core.find(idVendor=0x03eb,idProduct=0x6124)
@@ -28,10 +30,9 @@ flashBase = 0x80000
 offset = 0
 
 def getStr():
-	print ''.join(map(chr, dev.read(0x82, 512, 1, 100)))
+	return ''.join(map(chr, dev.read(0x82, 512, 1, 100)))
 
 def putStr(x):
-	print x
 	return dev.write(0x01, x, 1, 100)
 
 # erase flash
@@ -79,3 +80,5 @@ for pos in xrange(0,fw.length/8,4):
 #dev.write(0x01, "W400E0804,5A00010B#", 1, 100)
 # last thing - jump to flash
 putStr("G00080000#")
+
+print "good to go!"

@@ -8,8 +8,7 @@ cleanLocal:
 HW_VERSION=0
 GIT_VERSION=$(shell git describe --always --dirty='*')
 
-MAKEFILE_PATH = Makefile.sam.in
-include $(MAKEFILE_PATH)
+include ../asf/sam/utils/make/Makefile.sam.in
 
 cflags-gnu-y += -D'HW_VERSION=$(HW_VERSION)'
 cflags-gnu-y += -D'FW_VERSION=$(GIT_VERSION)'
