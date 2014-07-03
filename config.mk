@@ -14,7 +14,7 @@ TARGET_SRAM = helium_sram.elf
 
 # List of C source files.
 CSRCS = \
-       ../ubuild/main.c \
+       ../ubuild/src/main.c \
        common/services/clock/sam3u/sysclk.c               \
        common/services/delay/sam/cycle_counter.c          \
        common/services/sleepmgr/sam/sleepmgr.c            \
@@ -42,7 +42,7 @@ ASSRCS =
 
 # List of include paths.
 INC_PATH = \
-       ../ubuild \
+       ../ubuild/src \
        common/boards                                      \
        common/services/delay                              \
        common/services/clock                              \
