@@ -74,14 +74,17 @@ for pos in xrange(0,fw.length/8,4):
 		time.sleep(0.01)
 		getStr()
 		getStr()
-		getStr()
+		assert int(getStr().strip(), 16) == 1
 		page += 1
 
 
 # disable SAM-BA
 putStr("W400E0804,5A00010B#")
+getStr()
+getStr()
 
 # jump to flash
-putStr("G00080000#")
+putStr("G00000000#")
+getStr()
 
 print "good to go!"
