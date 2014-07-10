@@ -6,7 +6,6 @@ static bool main_b_vendor_enable = false;
 #define xstringify(s) stringify(s)
 bool reset = false;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
-uint8_t ret_data[64];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 
@@ -37,6 +36,7 @@ static twi_options_t TWIM_CONFIG =
 static uint32_t main_buf[1024];
 uint16_t* sample_view = (uint16_t*)main_buf;
 uint8_t* main_buf_loopback = (uint8_t*)main_buf;
+uint8_t* ret_data = (uint8_t*)main_buf;
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -315,7 +315,7 @@ bool main_setup_handle(void) {
 				uint32_t ct = udd_g_ctrlreq.req.wIndex;
 				read_adcs(ct, sample_view);
 				size = ct*2;
-				ptr = main_buf_loopback;
+				ptr = ret_data;
 				break;
 			}
 			case 0x5C: {
