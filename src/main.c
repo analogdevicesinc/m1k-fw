@@ -8,6 +8,7 @@ bool reset = false;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
+volatile uint32_t packet_offset = 0;
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
@@ -19,7 +20,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 
 static  usart_spi_opt_t USART_SPI_DAC =
 {
-	.baudrate     = 8000000,
+	.baudrate     = 24000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_1,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -48,6 +49,73 @@ void init_build_usb_serial_number(void) {
 	serial_number[32] = 0;
 }
 
+void TC1_Handler(void) {
+	uint32_t active_conditions = TC0->TC_CHANNEL[1].TC_SR & 0x001C;
+	active_conditions = active_conditions >> 2;
+	switch (active_conditions) {
+		// RA match, CNV
+		case 1: {
+			// CNV H->L
+			pio_toggle_pin(26);
+			// LDAC
+			pio_toggle_pin(14);
+			cpu_delay_us(1, F_CPU);
+			pio_toggle_pin(14);
+			break;
+		}
+		// RB match, move data
+		case 2: {
+			// SYNC H->L
+			pio_toggle_pin(16);
+			cpu_delay_us(4, F_CPU);
+			// setup DAC out
+			// USART0->US_TPR = &packets_out[packet_index].data[packet_offset*2];
+			// USART0->US_TCR = 3;
+			// setup ADC out
+			// USART1->US_TPR = &packets_in[packet_index].ADC_conf;
+			// USART1->US_TCR = 2;
+			// USART1->US_RPR = &packets_in[packet_index].data[packet_offset*2];
+			// USART1->US_RCR = 2;
+			// USART2->US_TPR = &packets_in[packet_index].ADC_conf;
+			// USART2->US_TCR = 2;
+			// USART2->US_RPR = &packets_in[packet_index].data[packet_offset*2+1];
+			// USART2->US_RCR = 2;
+			// enable all the transactions
+			// wait until DAC transaction complete
+			// SYNC L->H
+			pio_toggle_pin(16);
+			cpu_delay_us(1, F_CPU);
+			// SYNC H->L
+			pio_toggle_pin(16);
+			cpu_delay_us(4, F_CPU);
+			// USART0->US_TPR = &packets_out[packet_index].data[packet_offset*2+1];
+			// USART0->US_TCR = 3;
+			// wait until ADC transfers complete
+			// wait until DAC transfer completes
+			// SYNC L->H
+			pio_toggle_pin(16);
+			// CNV L->H (after all transfers complete)
+			pio_toggle_pin(26);
+			packet_offset += 1;
+			break;
+		}
+		// RC match, housekeeping and USB as needed
+		case 4: {
+			if (packet_offset > 511) {
+				// send_packet(packets_out[packet_index]);
+				// get_packet(packets_in[packet_index]);
+				// packet_index = packet_index^1
+				packet_offset = 0;
+			}
+			/* if (packet_offset == 1)
+				packets_in[packet_index].ADC_conf = 0;
+			*/
+			break;
+		}
+	}
+	
+}
+
 void hardware_init(void) {
 // enable peripheral clock access
 	pmc_enable_periph_clk(ID_PIOA);
@@ -56,6 +124,7 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART0);
 	pmc_enable_periph_clk(ID_USART1);
 	pmc_enable_periph_clk(ID_USART2);
+	pmc_enable_periph_clk(ID_TC1);
 
 // PWR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
@@ -66,7 +135,7 @@ void hardware_init(void) {
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA10A_TWCK0, PIO_DEFAULT);
 
 // LDAC_N
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA14, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA14, PIO_DEFAULT);
 // CLR_N
 	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA15, PIO_DEFAULT);
 // SYNC_N
@@ -104,11 +173,11 @@ void hardware_init(void) {
 	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
 
 // CHA_OUT_CONNECT
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0, PIO_DEFAULT);
 // CHA_OUT_50OPAR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB1, PIO_DEFAULT);
 // CHA_OUT_10KSER
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB2, PIO_DEFAULT);
 // CHA_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 
@@ -135,6 +204,20 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
+	// TC1, channel 0 used for sampling
+	// disable clock
+	TC0->TC_CHANNEL[1].TC_CCR = TC_CCR_CLKDIS;
+	// disable all interrupts
+	TC0->TC_CHANNEL[1].TC_IDR = ~0;
+	// clear status reg
+	TC0->TC_CHANNEL[1].TC_SR;
+	// config
+	TC0->TC_CHANNEL[1].TC_CMR = TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE;// 96MHz/128 -> 750kcps
+	TC0->TC_CHANNEL[1].TC_RC = 0xffff; // 11Hz
+	TC0->TC_CHANNEL[1].TC_RB = 0x7fff; // 20uS
+	TC0->TC_CHANNEL[1].TC_RA = 0x000f; // 20uS
+	TC0->TC_CHANNEL[1].TC_IER = TC_IER_CPAS | TC_IER_CPBS | TC_IER_CPCS;
+	TC0->TC_CHANNEL[1].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
 }
 
 void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
@@ -148,6 +231,9 @@ void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
 	usart_putchar(USART0, b[2]);
 	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
 	pio_toggle_pin(16);
+	pio_toggle_pin(14);
+	cpu_delay_us(1, F_CPU);
+	pio_toggle_pin(14);
 }
 
 uint32_t read_adc(uint16_t cmd) {

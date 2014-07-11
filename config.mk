@@ -25,7 +25,8 @@ CSRCS = \
        sam/drivers/pio/pio.c                              \
        sam/drivers/efc/efc.c                              \
        sam/drivers/pio/pio_handler.c                      \
-       sam/drivers/twi/twi.c                      \
+       sam/drivers/tc/tc.c                                \
+       sam/drivers/twi/twi.c                              \
        sam/drivers/wdt/wdt.c                              \
        sam/drivers/pmc/pmc.c                              \
        sam/drivers/pmc/sleep.c                            \
@@ -62,6 +63,7 @@ INC_PATH = \
        sam/drivers/twi                                    \
        sam/drivers/pmc                                    \
        sam/drivers/wdt                                    \
+       sam/drivers/tc                                     \
        sam/drivers/udphs                                  \
        sam/drivers/usart                                  \
        sam/utils                                          \
