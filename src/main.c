@@ -54,48 +54,50 @@ void TC0_Handler(void) {
 	if ((stat & TC_SR_CPAS) > 0) {
 			// CNV H->L
 			pio_toggle_pin(26);
-			// LDAC
-			pio_toggle_pin(14);
-			cpu_delay_us(1, F_CPU);
-			pio_toggle_pin(14);
-			// SYNC H->L
 			pio_toggle_pin(16);
 			cpu_delay_us(4, F_CPU);
 			// setup DAC out
 			// USART0->US_TPR = &packets_out[packet_index].data[packet_offset*2];
 			// USART0->US_TCR = 3;
 			// setup ADC out
-			// USART1->US_TPR = &packets_in[packet_index].ADC_conf;
+			// USART1->US_TPR = &packets_out[packet_index].ADC_conf;
 			// USART1->US_TCR = 2;
-			// USART1->US_RPR = &packets_in[packet_index].data[packet_offset*2];
+			// USART1->US_RPR = &packets_in[packet_index][packet_offset*2];
 			// USART1->US_RCR = 2;
-			// USART2->US_TPR = &packets_in[packet_index].ADC_conf;
+			// USART2->US_TPR = &packets_out[packet_index].ADC_conf;
 			// USART2->US_TCR = 2;
-			// USART2->US_RPR = &packets_in[packet_index].data[packet_offset*2+1];
+			// USART2->US_RPR = &packets_in[packet_index][packet_offset*2+1];
 			// USART2->US_RCR = 2;
 			// enable all the transactions
 			// wait until DAC transaction complete
-			// SYNC L->H
-			pio_toggle_pin(16);
-			cpu_delay_us(1, F_CPU);
-			// SYNC H->L
-			pio_toggle_pin(16);
-			cpu_delay_us(4, F_CPU);
+			// USART0->US_PTCR = US_PTCR_TXEN;
+			// USART1->US_PTCR = US_PTCR_TXEN | US_PTCR_RXEN;
+			// USART2->US_PTCR = US_PTCR_TXEN | US_PTCR_RXEN;
+			// wait until DAC transfer completes
+			//while(!((USART0->US_CSR&US_CSR_ENDTX) > 0));
 			// USART0->US_TPR = &packets_out[packet_index].data[packet_offset*2+1];
 			// USART0->US_TCR = 3;
 			// wait until ADC transfers complete
+			//while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
+			//while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 			// wait until DAC transfer completes
+			//while(!((USART0->US_CSR&US_CSR_ENDTX) > 0));
 			// SYNC L->H
 			pio_toggle_pin(16);
 			// CNV L->H (after all transfers complete)
 			pio_toggle_pin(26);
 			packet_offset += 1;
+			// LDAC
+			pio_toggle_pin(14);
+			cpu_delay_us(1, F_CPU);
+			pio_toggle_pin(14);
+			// SYNC H->L
 		}
 		// RC match, housekeeping and USB as needed
 	if ((stat & TC_SR_CPCS) > 0) {
-			pio_toggle_pin(26);
-			cpu_delay_us(10, F_CPU);
-			pio_toggle_pin(26);
+			//pio_toggle_pin(26);
+			//cpu_delay_us(10, F_CPU);
+			//pio_toggle_pin(26);
 			if (packet_offset > 511) {
 				// send_packet(packets_out[packet_index]);
 				// get_packet(packets_in[packet_index]);
