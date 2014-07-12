@@ -1,6 +1,25 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+typedef struct IN_packet{
+	uint16_t data_a[256];
+	uint16_t data_b[256];
+} IN_packet;
+//} __attribute__((packed)) IN_packet;
+
+typedef struct OUT_packet{
+	uint16_t mode_a;
+	uint16_t mode_b;
+	uint16_t ADC_conf_a;
+	uint16_t ADC_conf_b;
+	uint32_t data_a[256];
+	uint32_t data_b[256];
+} OUT_packet;
+//} __attribute__((packed)) OUT_packet;
+
+IN_packet packets_in[2];
+OUT_packet packets_out[2];
+
 bool main_vendor_enable(void);
 
 void main_vendor_disable(void);
