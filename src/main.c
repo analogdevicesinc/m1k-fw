@@ -49,22 +49,19 @@ void init_build_usb_serial_number(void) {
 	serial_number[32] = 0;
 }
 
-void TC1_Handler(void) {
-	uint32_t active_conditions = TC0->TC_CHANNEL[1].TC_SR & 0x001C;
-	active_conditions = active_conditions >> 2;
-	switch (active_conditions) {
-		// RA match, CNV
-		case 1: {
+void TC0_Handler(void) {
+	uint32_t stat = (TC0->TC_CHANNEL[0].TC_SR) & 0x1C;
+	if ((stat & TC_SR_CPAS) == TC_SR_CPAS) {
 			// CNV H->L
 			pio_toggle_pin(26);
 			// LDAC
 			pio_toggle_pin(14);
 			cpu_delay_us(1, F_CPU);
 			pio_toggle_pin(14);
-			break;
+			stat = TC_SR_CPBS;
 		}
 		// RB match, move data
-		case 2: {
+	if ((stat & TC_SR_CPBS) == TC_SR_CPBS) {
 			// SYNC H->L
 			pio_toggle_pin(16);
 			cpu_delay_us(4, F_CPU);
@@ -97,10 +94,9 @@ void TC1_Handler(void) {
 			// CNV L->H (after all transfers complete)
 			pio_toggle_pin(26);
 			packet_offset += 1;
-			break;
 		}
 		// RC match, housekeeping and USB as needed
-		case 4: {
+	if ((stat & TC_SR_CPBS) == TC_SR_CPCS) {
 			if (packet_offset > 511) {
 				// send_packet(packets_out[packet_index]);
 				// get_packet(packets_in[packet_index]);
@@ -110,10 +106,7 @@ void TC1_Handler(void) {
 			/* if (packet_offset == 1)
 				packets_in[packet_index].ADC_conf = 0;
 			*/
-			break;
 		}
-	}
-	
 }
 
 void hardware_init(void) {
@@ -124,7 +117,7 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART0);
 	pmc_enable_periph_clk(ID_USART1);
 	pmc_enable_periph_clk(ID_USART2);
-	pmc_enable_periph_clk(ID_TC1);
+	pmc_enable_periph_clk(ID_TC0);
 
 // PWR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
@@ -204,20 +197,21 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
-	// TC1, channel 0 used for sampling
+	// TC0, channel 1 used for sampling
 	// disable clock
-	TC0->TC_CHANNEL[1].TC_CCR = TC_CCR_CLKDIS;
+	TC0->TC_CHANNEL[0].TC_CCR = TC_CCR_CLKDIS;
 	// disable all interrupts
-	TC0->TC_CHANNEL[1].TC_IDR = ~0;
+	TC0->TC_CHANNEL[0].TC_IDR = 0xffffffff;
 	// clear status reg
-	TC0->TC_CHANNEL[1].TC_SR;
+	TC0->TC_CHANNEL[0].TC_SR;
 	// config
-	TC0->TC_CHANNEL[1].TC_CMR = TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE;// 96MHz/128 -> 750kcps
-	TC0->TC_CHANNEL[1].TC_RC = 0xffff; // 11Hz
-	TC0->TC_CHANNEL[1].TC_RB = 0x7fff; // 20uS
-	TC0->TC_CHANNEL[1].TC_RA = 0x000f; // 20uS
-	TC0->TC_CHANNEL[1].TC_IER = TC_IER_CPAS | TC_IER_CPBS | TC_IER_CPCS;
-	TC0->TC_CHANNEL[1].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
+	TC0->TC_CHANNEL[0].TC_CMR = TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE;// 96MHz/128 -> 750kcps
+	TC0->TC_CHANNEL[0].TC_IER = TC_IER_CPAS | TC_IER_CPBS | TC_IER_CPCS;
+	TC0->TC_CHANNEL[0].TC_RA = 0x00ff;
+	TC0->TC_CHANNEL[0].TC_RB = 0x0fff;
+	TC0->TC_CHANNEL[0].TC_RC = 0xffff;
+	TC0->TC_CHANNEL[0].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
+	NVIC_EnableIRQ(TC0_IRQn);
 }
 
 void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
