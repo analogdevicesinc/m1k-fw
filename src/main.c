@@ -118,18 +118,12 @@ void TC0_Handler(void) {
 		}
 		// RC match, housekeeping and USB as needed
 	if ((stat & TC_SR_CPCS) > 0) {
-			//pio_toggle_pin(26);
-			//cpu_delay_us(10, F_CPU);
-			//pio_toggle_pin(26);
-			if (packet_offset > 254) {
-				// send_packet(packets_out[packet_index]);
-				// get_packet(packets_in[packet_index]);
-				packet_index = packet_index^1;
+			if (packet_offset > 255) {
+				udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
+				udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
+				packet_index = packet_index ^ 1;
 				packet_offset = 0;
 			}
-			/* if (packet_offset == 1)
-				packets_in[packet_index].ADC_conf = 0;
-			*/
 		}
 }
 
@@ -438,10 +432,11 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 		return; // Transfer aborted, then stop loopback
 	}
 	// Wait a full buffer
-	udi_vendor_bulk_out_run(
+	/*udi_vendor_bulk_out_run(
 			main_buf_loopback,
 			sizeof(main_buf_loopback),
 			main_vendor_bulk_out_received);
+	*/
 }
 
 void main_vendor_bulk_out_received(udd_ep_status_t status,
@@ -452,8 +447,9 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		return; // Transfer aborted, then stop loopback
 	}
 	// Send on IN endpoint the data received on endpoint OUT
-	udi_vendor_bulk_in_run(
+	/*udi_vendor_bulk_in_run(
 			main_buf_loopback,
 			nb_transfered,
 			main_vendor_bulk_in_received);
+	*/
 }

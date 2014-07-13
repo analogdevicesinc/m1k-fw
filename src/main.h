@@ -5,6 +5,7 @@ typedef struct IN_packet{
 	uint16_t data_a[256];
 	uint16_t data_b[256];
 } IN_packet;
+// 4096 bytes
 //} __attribute__((packed)) IN_packet;
 
 typedef struct OUT_packet{
@@ -15,6 +16,7 @@ typedef struct OUT_packet{
 	uint32_t data_a[256];
 	uint32_t data_b[256];
 } OUT_packet;
+// 2048 + 16 = 2064
 //} __attribute__((packed)) OUT_packet;
 
 IN_packet packets_in[2];
