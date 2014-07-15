@@ -5,19 +5,15 @@ typedef struct IN_packet{
 	uint16_t data_a[256];
 	uint16_t data_b[256];
 } IN_packet;
-// 4096 bytes
-//} __attribute__((packed)) IN_packet;
 
 typedef struct OUT_packet{
-	uint16_t mode_a;
-	uint16_t mode_b;
-	uint16_t ADC_conf_a;
-	uint16_t ADC_conf_b;
+	uint32_t mode_a;
+	uint32_t mode_b;
+	uint32_t ADC_conf_a;
+	uint32_t ADC_conf_b;
 	uint32_t data_a[256];
 	uint32_t data_b[256];
 } OUT_packet;
-// 2048 + 16 = 2064
-//} __attribute__((packed)) OUT_packet;
 
 IN_packet packets_in[2];
 OUT_packet packets_out[2];
@@ -48,4 +44,4 @@ void main_vendor_bulk_out_received(udd_ep_status_t status, iram_size_t nb_transf
 void main_vendor_bulk_in_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
 
 
-#endif // _MAIN_H_
+#endif

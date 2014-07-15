@@ -8,12 +8,12 @@ bool reset = false;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
-volatile uint32_t packet_offset = 0;
+volatile uint32_t slot_offset = 0;
 volatile uint32_t packet_index = 0;
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
-	.baudrate     = 4000000,
+	.baudrate     = 24000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_0,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -21,7 +21,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 
 static  usart_spi_opt_t USART_SPI_DAC =
 {
-	.baudrate     = 4000000,
+	.baudrate     = 24000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_1,
 	.channel_mode  = US_MR_CHMODE_NORMAL
@@ -35,7 +35,7 @@ static twi_options_t TWIM_CONFIG =
 	.smbus = 0,
 };
 
-static uint32_t main_buf[1024];
+static uint32_t main_buf[10];
 uint16_t* sample_view = (uint16_t*)main_buf;
 uint8_t* main_buf_loopback = (uint8_t*)main_buf;
 uint8_t* ret_data = (uint8_t*)main_buf;
@@ -53,25 +53,23 @@ void init_build_usb_serial_number(void) {
 void TC0_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 0);
 	if ((stat & TC_SR_CPAS) > 0) {
-			// CNV H->L
-			// SYNC H->L
+			// SYNC & CNV H->L
 			pio_toggle_pin_group(PIOA, (1<<26)|(1<<16));
-			// setup DAC out
-			USART0->US_TPR = &packets_out[packet_index].data_a[packet_offset];
-			USART0->US_TCR = 3;
-			// setup ADC V in & out
+			USART0->US_TPR = &packets_out[packet_index].data_a[slot_offset];
 			USART1->US_TPR = &packets_out[packet_index].ADC_conf_a;
-			USART1->US_TCR = 2;
-			USART1->US_RPR = &packets_in[packet_index].data_a[packet_offset];
-			USART1->US_RCR = 2;
+			USART1->US_RPR = &packets_in[packet_index].data_a[slot_offset];
 			USART2->US_TPR = &packets_out[packet_index].ADC_conf_b;
+			USART2->US_RPR = &packets_in[packet_index].data_b[slot_offset];
+			USART0->US_TCR = 3;
+			USART1->US_TCR = 2;
+			USART1->US_RCR = 2;
 			USART2->US_TCR = 2;
-			USART2->US_RPR = &packets_in[packet_index].data_b[packet_offset];
 			USART2->US_RCR = 2;
-			// enable all the transactions
 			USART0->US_PTCR = US_PTCR_TXTEN;
 			USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 			USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
+			// increment
+			slot_offset += 1;
 			// wait until transactions complete
 			while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
@@ -79,50 +77,39 @@ void TC0_Handler(void) {
 			// both need to be toggled between channel interactions
 			// cnv should not be \pm 20ns of a dio change
 			pio_toggle_pin_group(PIOA, (1<<26));
-			portable_delay_cycles(4);
-			pio_toggle_pin_group(PIOA, (1<<16));
-			portable_delay_cycles(4);
+			USART0->US_TPR = &packets_out[packet_index].data_b[slot_offset];
 			pio_toggle_pin_group(PIOA, (1<<26));
-			portable_delay_cycles(4);
-			pio_toggle_pin_group(PIOA, (1<<16));
-			portable_delay_cycles(4);
-			// setup ADC I in & out
 			USART1->US_TPR = &packets_out[packet_index].ADC_conf_a;
-			USART1->US_TCR = 2;
-			USART1->US_RPR = &packets_in[packet_index].data_a[packet_offset];
-			USART1->US_RCR = 2;
+			USART1->US_RPR = &packets_in[packet_index].data_a[slot_offset];
+			pio_toggle_pin_group(PIOA, (1<<16));
 			USART2->US_TPR = &packets_out[packet_index].ADC_conf_b;
-			USART2->US_TCR = 2;
-			USART2->US_RPR = &packets_in[packet_index].data_b[packet_offset];
-			USART2->US_RCR = 2;
-			// chb DAC out
-			USART0->US_TPR = &packets_out[packet_index].data_b[packet_offset];
+			USART2->US_RPR = &packets_in[packet_index].data_b[slot_offset];
+			pio_toggle_pin_group(PIOA, (1<<16));
 			USART0->US_TCR = 3;
-			USART0->US_PTCR = US_PTCR_TXTEN;
-			USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
-			USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
+			USART1->US_TCR = 2;
+			USART1->US_RCR = 2;
+			USART2->US_TCR = 2;
+			USART2->US_RCR = 2;
 			// wait until transfers completes
 			while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 			// SYNC & CNV L->H (after all transfers complete)
 			pio_toggle_pin_group(PIOA, (1<<26));
-			portable_delay_cycles(4);
 			pio_toggle_pin_group(PIOA, (1<<16));
-			portable_delay_cycles(4);
-			// LDAC H->L
 			pio_toggle_pin_group(PIOA, (1<<14));
-			portable_delay_cycles(2);
-			// LDAC L->H
 			pio_toggle_pin_group(PIOA, (1<<14));
-			packet_offset += 1;
+			slot_offset += 1;
 		}
 		// RC match, housekeeping and USB as needed
 	if ((stat & TC_SR_CPCS) > 0) {
-			if (packet_offset > 255) {
+			if (slot_offset > 255) {
 				udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
 				udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
-				packet_index = packet_index ^ 1;
-				packet_offset = 0;
+				if (packet_index == 1)
+					packet_index = 0;
+				if (packet_index == 0)
+					packet_index = 1;
+				slot_offset = 0;
 			}
 		}
 }
@@ -217,8 +204,8 @@ void hardware_init(void) {
 
 
 	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
-	tc_write_ra(TC0, 0, 0x00ff);
-	tc_write_rc(TC0, 0, 0x02ff);
+	tc_write_ra(TC0, 0, 0x0001);
+	tc_write_rc(TC0, 0, 0x000c);
 	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
 	tc_start(TC0, 0);
 	NVIC_EnableIRQ(TC0_IRQn);
@@ -336,8 +323,6 @@ bool main_vendor_enable(void) {
 void main_vendor_disable(void) {
 	main_b_vendor_enable = false;
 }
-
-
 
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
