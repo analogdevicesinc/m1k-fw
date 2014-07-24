@@ -8,10 +8,8 @@ typedef struct IN_packet{
 } IN_packet;
 
 typedef struct OUT_packet{
-	uint32_t mode_a;
-	uint32_t mode_b;
-	uint32_t ADC_conf_a;
-	uint32_t ADC_conf_b;
+	uint16_t ADC_conf_a;
+	uint16_t ADC_conf_b;
 	uint32_t data_a[256];
 	uint32_t data_b[256];
 } OUT_packet;

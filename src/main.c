@@ -59,16 +59,16 @@ void TC0_Handler(void) {
 		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset_out];
 		USART1->US_TPR = &packets_out[packet_index_out].ADC_conf_a;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a[slot_offset_in];
-		USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
-		USART2->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
+	//	USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
+	//	USART2->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
-		USART2->US_TCR = 2;
-		USART2->US_RCR = 2;
+	//	USART2->US_TCR = 2;
+	//	USART2->US_RCR = 2;
 		USART0->US_PTCR = US_PTCR_TXTEN;
 		USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
-		USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
+	//	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 		// increment
 		// wait until transactions complete
 		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
@@ -77,19 +77,19 @@ void TC0_Handler(void) {
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
 		pio_toggle_pin_group(PIOA, (1<<26));
-		USART0->US_TPR = &packets_out[packet_index_out].data_b[slot_offset_out];
+	//	USART0->US_TPR = &packets_out[packet_index_out].data_b[slot_offset_out];
 		pio_toggle_pin_group(PIOA, (1<<26));
-		USART1->US_TPR = &packets_out[packet_index_out].ADC_conf_a;
-		USART1->US_RPR = &packets_in[packet_index_in].data_a[slot_offset_in];
 		pio_toggle_pin_group(PIOA, (1<<16));
-		USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
-		USART2->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
+		USART1->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
+		USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
+	//	USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
+	//	USART2->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
 		pio_toggle_pin_group(PIOA, (1<<16));
-		USART0->US_TCR = 3;
-		//USART1->US_TCR = 2;
-		//USART1->US_RCR = 2;
-		//USART2->US_TCR = 2;
-		//USART2->US_RCR = 2;
+	//	USART0->US_TCR = 3;
+		USART1->US_TCR = 2;
+		USART1->US_RCR = 2;
+	//	USART2->US_TCR = 2;
+	//	USART2->US_RCR = 2;
 		// wait until transfers completes
 		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
@@ -109,6 +109,14 @@ void TC0_Handler(void) {
 			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset_in = 0;
 			slot_offset_out = 0;
+		if (packet_index_in == 1)
+			packet_index_in = 0;
+		else
+			packet_index_in = 1;
+		if (packet_index_out == 1)
+			packet_index_out = 0;
+		else
+			packet_index_out = 1;
 		}
 	}
 }
@@ -123,8 +131,12 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART2);
 	pmc_enable_periph_clk(ID_TC0);
 
+// LED
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB10, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB9, PIO_DEFAULT);
+
 // PWR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
 
 // SDA
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
@@ -165,18 +177,18 @@ void hardware_init(void) {
 	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
 
 // CHA_OUT_CONNECT
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB0, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
 // CHA_OUT_50OPAR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB1, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
 // CHA_OUT_10KSER
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB2, PIO_DEFAULT);
 // CHA_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 
 // CHB_OUT_CONNECT
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB5, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB5, PIO_DEFAULT);
 // CHB_OUT_50OPAR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB6, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB6, PIO_DEFAULT);
 // CHB_OUT_10KSER
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB7, PIO_DEFAULT);
 // CHB_OUT_1MOPAR
@@ -196,15 +208,15 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
-	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK4 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
-	tc_write_ra(TC0, 0, 0x0001);
-	tc_write_rc(TC0, 0, 0x0008);
+	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
+	tc_write_ra(TC0, 0, 0x0004);
+	tc_write_rc(TC0, 0, 0x003c); // 1/(0x3c/(96MHz/32))
 	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
 	tc_start(TC0, 0);
 	NVIC_EnableIRQ(TC0_IRQn);
 }
 
-/*void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
+void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
 	uint32_t b[3];
 	pio_toggle_pin(16);
 	b[0] = cmd << 3 | addr;
@@ -220,36 +232,6 @@ void hardware_init(void) {
 	pio_toggle_pin(14);
 }
 
-uint32_t read_adc(uint16_t cmd) {
-	// RAC
-	uint32_t hb, lb;
-	pio_toggle_pin(26);
-	usart_putchar(USART1, cmd >> 8);
-	while(!((USART1->US_CSR & US_CSR_TXEMPTY) > 0));
-	usart_read(USART1, &hb);
-	usart_putchar(USART1, cmd & 0xff);
-	while(!((USART1->US_CSR & US_CSR_TXEMPTY) > 0));
-	usart_read(USART1, &lb);
-	uint32_t x = (hb << 8 | lb);
-	pio_toggle_pin(26);
-	return x;
-}
-
-void read_adcs(uint32_t count, uint16_t* out) {
-	for (uint32_t i = 0; i < count; i++) {
-		pio_toggle_pin(26);
-		for (uint32_t j = 0; j < 2; j++) {
-			while(!((USART1->US_CSR & US_CSR_TXRDY) > 0));
-			USART1->US_THR = US_THR_TXCHR(0);
-			while(!((USART1->US_CSR & US_CSR_RXRDY) > 0));
-			main_buf_loopback[i*2+j] = USART1->US_RHR & US_RHR_RXCHR_Msk;
-		}
-		while(!((USART1->US_CSR & US_CSR_TXEMPTY) > 0));
-		pio_toggle_pin(26);
-		cpu_delay_us(2, F_CPU);
-	}
-}
-*/
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
 	uint8_t v;
@@ -364,29 +346,12 @@ bool main_setup_handle(void) {
 				write_pots(ch, r1, r2);
 				break;
 			}
-/*			case 0x3D: {
+			case 0x3D: {
 				uint8_t cmd = udd_g_ctrlreq.req.wIndex&0xFF;
 				uint8_t addr = (udd_g_ctrlreq.req.wIndex>>8)&0xFF;
 				write_dac(cmd, addr, udd_g_ctrlreq.req.wValue);
 				break;
 			}
-			case 0xAD: {
-				uint16_t cmd = udd_g_ctrlreq.req.wIndex;
-				uint16_t val = read_adc(cmd);
-				ret_data[0] = val&0xff;
-				ret_data[1] = val >> 8;
-				ptr = ret_data;
-				size = 2;
-				break;
-			}
-			case 0xA4: {
-				uint32_t ct = udd_g_ctrlreq.req.wIndex;
-				read_adcs(ct, sample_view);
-				size = ct*2;
-				ptr = ret_data;
-				break;
-			}
-*/
 			case 0x5C: {
 				int32_t x = twi_probe(TWI0, udd_g_ctrlreq.req.wIndex&0xFF) == TWI_SUCCESS;
 				ret_data[0] = x;
@@ -411,10 +376,6 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 		return;
 	}
 	else {
-		if (packet_index_in == 1)
-			packet_index_in = 0;
-		if (packet_index_in == 0)
-			packet_index_in = 1;
 	}
 }
 
@@ -426,9 +387,5 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		return;
 	}
 	else {
-		if (packet_index_out == 1)
-			packet_index_out = 0;
-		if (packet_index_out == 0)
-			packet_index_out = 1;
 	}
 }
