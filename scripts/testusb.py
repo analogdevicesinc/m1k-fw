@@ -11,29 +11,35 @@ dev.set_interface_altsetting(0,1)
 dev.ctrl_transfer(0x40|0x80, 0x1B, 0x0707, ord("a"), 4)
 
 sineSIMV = [2**15+2**8+int(math.sin(math.pi*2.0*x/(2**8))*(2**8-1)) for x in range(2**8)]
-sineFast = [2**15+int(math.sin(math.pi*2.0*x/(2**8-1))*(2**15-1)) for x in range(2**8)]
+sineFast = [2**15+int(math.sin(math.pi*2.0*x/(2**8-1))*(2**14-1))for x in range(2**14)]
 sineSlow = [2**15+int(math.sin(math.pi*2.0*x/(2**16-1))*(2**15-1)) for x in range(2**16)]
-target = sineFast*8
+target = sineFast
 dev.get_active_configuration()[(0,1)][0].read(10280)
 
 counts = []
 voltages_a = []
 voltages_b = []
 
-# scanning: '\x85\xd8'
-
 for chunk in _chunk(target, 256):
-	# ADC configuration words
-	outPacket = chr(0b11110001)+chr(0b11000000) #cha current
-	outPacket += chr(0b11110101)+chr(0b11000000) #cha current
+	# bipolar scanning
+	outPacket = chr(0b10000001)+chr(0b11000000)
+	outPacket += chr(0b11110001)+chr(0b11000000)
 	outPacket += ''.join(['\x00'+ chr((chunk[y]>>8)&0xFF)+chr(chunk[y]&0xFF)+'\x00' for y in range(256)])
 	outPacket += ''.join(['\x00'+ chr((chunk[y]>>8)&0xFF)+chr(chunk[y]&0xFF)+'\x00' for y in range(256)])
 	dev.get_active_configuration()[(0,1)][1].write(outPacket, timeout=100)
 	data = dev.get_active_configuration()[(0,1)][0].read(1026)
 	counts += [data[1] * 256 + data[0]]
-	voltages_a += [(hb << 8 | lb) for hb,lb in zip(data[2:514:2], data[3:514:2])]
-	voltages_b += [(hb << 8 | lb) for hb,lb in zip(data[515::2], data[514::2])]
+	voltages_a += [(hb << 8 | lb) + (2**15-1) if hb <= 0x7f else (hb << 8 | lb) - (2**15-1) for hb,lb in zip(data[2:514:2], data[3:514:2])]
+	voltages_b += [(hb << 8 | lb) + (2**15-1) if hb <= 0x7f else (hb << 8 | lb) - (2**15-1) for hb,lb in zip(data[514:1026:2], data[515:1026:2])]
+	#voltages_a += [(hb << 8 | lb) for hb,lb in zip(data[2:514:2], data[3:514:2])]#[0:256:2]
+	#voltages_a += [(hb << 8 | lb) for hb,lb in zip(data[514:1026:2], data[515:1026:2])][0:256:2]
+	#voltages_b += [(hb << 8 | lb) for hb,lb in zip(data[2:514:2], data[3:514:2])]#[1:256:2]
+	#voltages_b += [(hb << 8 | lb) for hb,lb in zip(data[514:1026:2], data[515:1026:2])]#[1:256:2]
+	#voltages_b += [(hb << 8 | lb) for hb,lb in zip(data[2:514:2], data[3:514:2])][0:256:2]
+	#voltages_a += [(hb << 8 | lb) for hb,lb in zip(data[2:514:2], data[3:514:2])][1:256:2]
 	print len(data), len(voltages_a), len(voltages_b)
+
+target = target
 
 from pylab import *
 

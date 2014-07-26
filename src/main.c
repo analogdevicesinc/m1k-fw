@@ -69,7 +69,6 @@ void TC0_Handler(void) {
 		USART0->US_PTCR = US_PTCR_TXTEN;
 		USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 	//	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
-		// increment
 		// wait until transactions complete
 		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
@@ -78,8 +77,10 @@ void TC0_Handler(void) {
 		// cnv should not be \pm 20ns of a dio change
 		pio_toggle_pin_group(PIOA, (1<<26));
 	//	USART0->US_TPR = &packets_out[packet_index_out].data_b[slot_offset_out];
-		pio_toggle_pin_group(PIOA, (1<<26));
+		if (slot_offset_out == 0)
+			packets_out[packet_index_out].ADC_conf_a = 0;
 		pio_toggle_pin_group(PIOA, (1<<16));
+		pio_toggle_pin_group(PIOA, (1<<26));
 		USART1->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
 		USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
 	//	USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
