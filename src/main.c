@@ -93,7 +93,7 @@ void TC0_Handler(void) {
 	// RC match, housekeeping and USB as needed
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (slot_offset_out > 255) {
-			packets_in[packet_index_in].frame_number = udd_get_frame_number();
+			//packets_in[packet_index_in].frame_number = udd_get_frame_number();
 			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_in]), sizeof(IN_packet), main_vendor_bulk_in_received);
 			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset_in = 0;

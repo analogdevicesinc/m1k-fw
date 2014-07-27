@@ -75,7 +75,7 @@ struct HeliumDevice {
 	void config_sync(uint64_t sample_rate, uint64_t sample_count) {
 		m_sample_rate = sample_rate;
 		m_sample_count = sample_count;
-		m_in_transfers.alloc(6, m_usb, 0x81, LIBUSB_TRANSFER_TYPE_BULK, 1026, 1000, in_completion, this);
+		m_in_transfers.alloc(6, m_usb, 0x81, LIBUSB_TRANSFER_TYPE_BULK, 1024, 1000, in_completion, this);
 		m_out_transfers.alloc(6, m_usb, 0x02, LIBUSB_TRANSFER_TYPE_BULK, 2048, 1000, out_completion, this);
 	}
 	
