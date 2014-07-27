@@ -1,0 +1,9 @@
+*.o
+*.elf
+*.bin
+*.d
+*.hex
+*.lss
+*.map
+*.sym
+scripts/testusb
