@@ -1,5 +1,6 @@
 #include <asf.h>
 #include "conf_usb.h"
+#include "conf_board.h"
 
 static bool main_b_vendor_enable = false;
 #define stringify(x)            #x
@@ -60,7 +61,7 @@ void TC0_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 0);
 	if ((stat & TC_SR_CPAS) > 0) {
 		// SYNC & CNV H->L
-		pio_toggle_pin_group(PIOA, (1<<26)|(1<<16));
+		pio_clear(PIOA, CNV|N_SYNC);
 		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset_out];
 		USART1->US_TPR = &zero;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a[slot_offset_in];
@@ -73,27 +74,26 @@ void TC0_Handler(void) {
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
-		pio_toggle_pin_group(PIOA, (1<<26));
-		cpu_delay_us(1, F_CPU);
-		pio_toggle_pin_group(PIOA, (1<<26));
-		pio_toggle_pin_group(PIOA, (1<<16));
+		pio_set(PIOA, CNV);
+		cpu_delay_us(3, F_CPU);
+		pio_clear(PIOA, CNV);
 		USART1->US_TPR = &zero;
-		USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
+		//USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
+		USART1->US_RPR = &scratch;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		// wait until transfers completes
 		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
-		pio_toggle_pin_group(PIOA, (1<<26));
-		pio_toggle_pin_group(PIOA, (1<<14));
-		pio_toggle_pin_group(PIOA, (1<<14));
+		pio_set(PIOA, CNV|N_SYNC);
+		pio_clear(PIOA, N_LDAC);
+		pio_set(PIOA, N_LDAC);
 		slot_offset_in += 1;
 		slot_offset_out += 1;
 	}
 	// RC match, housekeeping and USB as needed
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (slot_offset_out > 255) {
-			//packets_in[packet_index_in].frame_number = udd_get_frame_number();
 			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_in]), sizeof(IN_packet), main_vendor_bulk_in_received);
 			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset_in = 0;
@@ -205,7 +205,7 @@ void hardware_init(void) {
 
 void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
 	uint32_t b[3];
-	pio_toggle_pin(16);
+	pio_clear(PIOA, N_SYNC);
 	b[0] = cmd << 3 | addr;
 	b[1] = val >> 8;
 	b[2] = val >> 8;
@@ -213,10 +213,9 @@ void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
 	usart_putchar(USART0, b[1]);
 	usart_putchar(USART0, b[2]);
 	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
-	pio_toggle_pin(16);
-	pio_toggle_pin(14);
-	cpu_delay_us(1, F_CPU);
-	pio_toggle_pin(14);
+	pio_set(PIOA, N_SYNC);
+	pio_set(PIOA, N_LDAC);
+	pio_clear(PIOA, N_LDAC);
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -257,6 +256,10 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
+	for (uint32_t i=0; i<(2*sizeof(IN_packet)); i++)
+		((uint8_t*) packets_in)[i] = 0;
+	for (uint32_t i=0; i<(2*sizeof(OUT_packet)); i++)
+		((uint8_t*) packets_out)[i] = 0;
 	while (true) {
 		cpu_delay_us(100, F_CPU);
 		if (!reset)
@@ -323,7 +326,7 @@ bool main_setup_handle(void) {
 			case 0xAD: {
 				va = Swap16(udd_g_ctrlreq.req.wValue);
 				vb = Swap16(udd_g_ctrlreq.req.wIndex);
-				pio_toggle_pin_group(PIOA, (1<<26));
+				pio_clear(PIOA, CNV);
 				USART1->US_TPR = &va;
 				USART2->US_TPR = &vb;
 				USART1->US_RPR = &scratch;
@@ -334,8 +337,9 @@ bool main_setup_handle(void) {
 				USART2->US_RCR = 2;
 				while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 				while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-				pio_toggle_pin_group(PIOA, (1<<26));
-				pio_toggle_pin_group(PIOA, (1<<26));
+				pio_set(PIOA, CNV);
+				cpu_delay_us(1, F_CPU);
+				pio_clear(PIOA, CNV);
 				USART1->US_TPR = &zero;
 				USART2->US_TPR = &zero;
 				USART1->US_RPR = &scratch;
@@ -346,7 +350,7 @@ bool main_setup_handle(void) {
 				USART2->US_RCR = 2;
 				while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 				while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-				pio_toggle_pin_group(PIOA, (1<<26));
+				pio_set(PIOA, CNV);
 				break;
 			}
 			case 0x1B: {
