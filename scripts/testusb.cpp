@@ -6,7 +6,7 @@
 #include <libusb-1.0/libusb.h>
 #include <math.h>
 #include <arpa/inet.h>
-
+#include <endian.h>
 
 const size_t chunk_size = 256;
 
@@ -98,13 +98,17 @@ struct HeliumDevice {
 			if (!submit_out_transfer(i)) break;
 		}
 	}
+	void stop() {
+		uint8_t buf[4];
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0000, 0x0000, buf, 1, 100);
+	}
 	
 	bool submit_out_transfer(libusb_transfer* t) {
 		if (m_sample_count == 0 || m_out_sampleno < m_sample_count + 512) { //TODO: firmware bug that we have to send an extra packet
 			std::cerr << "submit_out_transfer " << m_out_sampleno << std::endl;
 			auto buf = (uint32_t*) t->buffer;
 			for (size_t i = 0; i < chunk_size; i++) {
-				buf[i] = buf[i+chunk_size] = m_src_buf[m_out_sampleno++] << 8;
+				buf[i] = buf[i+chunk_size] = htobe16(m_src_buf[m_out_sampleno++]) << 8;
 			}
 			
 			int r = libusb_submit_transfer(t);
@@ -223,7 +227,7 @@ int main()
 	const size_t len = (1<<14);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
-		out[i] = (1<<15) + sin(M_PI*2.0*i/((1<<8)-1))*((1<<14)-1);
+		out[i] = (1<<15) + uint16_t(cos(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
 	}
 	uint16_t in_v[len];
 	uint16_t in_i[len];
@@ -238,12 +242,13 @@ int main()
 	dev.config_sync(0, len);
 	dev.start();
 	dev.wait();
+	dev.stop();	
 	dev.release();
 	
 	for (size_t i=0; i<len; i++) {
-		std::cout << out[i] << ", " << in_v[i] << ", " << in_i[i] << std::endl; 
+		std::cout << out[i] << ", " << in_v[i] << ", " << in_i[i] << std::endl;
 	}
-	
+
 	exit(0); //TODO: stop libusb properly
 	usb_thread.join();
 }
