@@ -13,6 +13,7 @@ volatile uint32_t slot_offset_in = 0;
 volatile uint32_t packet_index_out = 0;
 volatile uint32_t packet_index_in = 0;
 
+
 static  usart_spi_opt_t USART_SPI_ADC =
 {
 	.baudrate     = 24000000,
@@ -41,6 +42,10 @@ static uint32_t main_buf[10];
 uint16_t* sample_view = (uint16_t*)main_buf;
 uint8_t* main_buf_loopback = (uint8_t*)main_buf;
 uint8_t* ret_data = (uint8_t*)main_buf;
+static uint32_t zero = 0;
+static uint32_t scratch = 0;
+uint16_t va = 0;
+uint16_t vb = 0;
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -57,18 +62,11 @@ void TC0_Handler(void) {
 		// SYNC & CNV H->L
 		pio_toggle_pin_group(PIOA, (1<<26)|(1<<16));
 		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset_out];
-		USART1->US_TPR = &packets_out[packet_index_out].ADC_conf_a;
+		USART1->US_TPR = &zero;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a[slot_offset_in];
-	//	USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
-	//	USART2->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
-	//	USART2->US_TCR = 2;
-	//	USART2->US_RCR = 2;
-		USART0->US_PTCR = US_PTCR_TXTEN;
-		USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
-	//	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 		// wait until transactions complete
 		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
@@ -76,27 +74,17 @@ void TC0_Handler(void) {
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
 		pio_toggle_pin_group(PIOA, (1<<26));
-	//	USART0->US_TPR = &packets_out[packet_index_out].data_b[slot_offset_out];
-		if (slot_offset_out == 0)
-			packets_out[packet_index_out].ADC_conf_a = 0;
-		pio_toggle_pin_group(PIOA, (1<<16));
+		cpu_delay_us(1, F_CPU);
 		pio_toggle_pin_group(PIOA, (1<<26));
-		USART1->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
-		USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
-	//	USART2->US_TPR = &packets_out[packet_index_out].ADC_conf_b;
-	//	USART2->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
 		pio_toggle_pin_group(PIOA, (1<<16));
-	//	USART0->US_TCR = 3;
+		USART1->US_TPR = &zero;
+		USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
-	//	USART2->US_TCR = 2;
-	//	USART2->US_RCR = 2;
 		// wait until transfers completes
 		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
-		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
 		pio_toggle_pin_group(PIOA, (1<<26));
-		pio_toggle_pin_group(PIOA, (1<<16));
 		pio_toggle_pin_group(PIOA, (1<<14));
 		pio_toggle_pin_group(PIOA, (1<<14));
 		slot_offset_in += 1;
@@ -172,12 +160,7 @@ void hardware_init(void) {
 // CHB_SWMODE
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB20, PIO_DEFAULT);
 
-// CHA_SAFE_SWITCH
-	pio_configure(PIOB, PIO_INPUT, PIO_PB4, PIO_DEFAULT);
-// CHB_SAFE_SWITCH
-	pio_configure(PIOB, PIO_INPUT, PIO_PB18, PIO_DEFAULT);
-
-// CHA_OUT_CONNECT
+// CHA_OUT_1KOPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
 // CHA_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
@@ -186,7 +169,7 @@ void hardware_init(void) {
 // CHA_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 
-// CHB_OUT_CONNECT
+// CHA_OUT_1KOPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB5, PIO_DEFAULT);
 // CHB_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB6, PIO_DEFAULT);
@@ -203,17 +186,20 @@ void hardware_init(void) {
 	usart_init_spi_master(USART2, &USART_SPI_ADC, F_CPU);
 	usart_enable_tx(USART2);
 	usart_enable_rx(USART2);
+// enable pdc for USARTs
+	USART0->US_PTCR = US_PTCR_TXTEN;
+	USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
+	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 
 // 100khz I2C
 	twi_reset(TWI0);
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
+// CLOCK3 = MCLK/32
+// counts to RC
 	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
-	tc_write_ra(TC0, 0, 0x0004);
-	tc_write_rc(TC0, 0, 0x003c); // 1/(0x3c/(96MHz/32))
 	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
-	tc_start(TC0, 0);
 	NVIC_EnableIRQ(TC0_IRQn);
 }
 
@@ -287,7 +273,6 @@ void main_resume_action(void) { }
 void main_sof_action(void) {
 	if (!main_b_vendor_enable)
 		return;
-
 }
 
 bool main_vendor_enable(void) {
@@ -335,9 +320,33 @@ bool main_setup_handle(void) {
 				reset = true;
 				break;
 			}
-			case 0x50: {
-				uint8_t c = udd_g_ctrlreq.req.wValue&0xFF;
-				usart_putchar(USART0, c);
+			case 0xAD: {
+				va = Swap16(udd_g_ctrlreq.req.wValue);
+				vb = Swap16(udd_g_ctrlreq.req.wIndex);
+				pio_toggle_pin_group(PIOA, (1<<26));
+				USART1->US_TPR = &va;
+				USART2->US_TPR = &vb;
+				USART1->US_RPR = &scratch;
+				USART2->US_RPR = &scratch;
+				USART1->US_TCR = 2;
+				USART1->US_RCR = 2;
+				USART2->US_TCR = 2;
+				USART2->US_RCR = 2;
+				while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
+				while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
+				pio_toggle_pin_group(PIOA, (1<<26));
+				pio_toggle_pin_group(PIOA, (1<<26));
+				USART1->US_TPR = &zero;
+				USART2->US_TPR = &zero;
+				USART1->US_RPR = &scratch;
+				USART2->US_RPR = &scratch;
+				USART1->US_TCR = 2;
+				USART1->US_RCR = 2;
+				USART2->US_TCR = 2;
+				USART2->US_RCR = 2;
+				while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
+				while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
+				pio_toggle_pin_group(PIOA, (1<<26));
 				break;
 			}
 			case 0x1B: {
@@ -353,11 +362,18 @@ bool main_setup_handle(void) {
 				write_dac(cmd, addr, udd_g_ctrlreq.req.wValue);
 				break;
 			}
-			case 0x5C: {
-				int32_t x = twi_probe(TWI0, udd_g_ctrlreq.req.wIndex&0xFF) == TWI_SUCCESS;
-				ret_data[0] = x;
-				ptr = ret_data;
-				size = 4;
+			case 0xC5: {
+				if (udd_g_ctrlreq.req.wValue < 1)
+					tc_stop(TC0, 0);
+				else {
+					slot_offset_out = 0;
+					slot_offset_in = 0;
+					packet_index_out = 0;
+					packet_index_in = 0;
+					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
+					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
+					tc_start(TC0, 0);
+				}
 				break;
 			}
 		}

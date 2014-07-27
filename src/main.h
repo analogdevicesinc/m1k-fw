@@ -8,8 +8,6 @@ typedef struct IN_packet{
 } IN_packet;
 
 typedef struct OUT_packet{
-	uint16_t ADC_conf_a;
-	uint16_t ADC_conf_b;
 	uint32_t data_a[256];
 	uint32_t data_b[256];
 } OUT_packet;
@@ -41,6 +39,5 @@ uint32_t read_adc(uint16_t cmd);
 
 void main_vendor_bulk_out_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_vendor_bulk_in_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
-
 
 #endif
