@@ -5,7 +5,6 @@
 #include <vector>
 #include <libusb-1.0/libusb.h>
 #include <math.h>
-#include <arpa/inet.h>
 #include <endian.h>
 
 const size_t chunk_size = 256;
@@ -132,8 +131,8 @@ struct HeliumDevice {
 		
 		auto buf = (uint16_t*) (t->buffer + 2);
 		for (size_t i = 0; i < chunk_size; i++) {
-			m_dest_buf_v[m_in_sampleno  ] = ntohs(buf[i]);
-			m_dest_buf_i[m_in_sampleno++] = ntohs(buf[i+chunk_size]);
+			m_dest_buf_v[m_in_sampleno  ] = be16toh(buf[i]);
+			m_dest_buf_i[m_in_sampleno++] = be16toh(buf[i+chunk_size]);
 		}
 		
 		if (m_in_sampleno >= m_sample_count) {
