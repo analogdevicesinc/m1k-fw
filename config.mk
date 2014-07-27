@@ -1,5 +1,5 @@
 # Path to top level ASF directory relative to this project directory.
-PRJ_PATH = ../asf
+PRJ_PATH = asf
 
 # Target CPU architecture: cortex-m3, cortex-m4
 ARCH = cortex-m3
@@ -14,7 +14,7 @@ TARGET_SRAM = helium_sram.elf
 
 # List of C source files.
 CSRCS = \
-       ../ubuild/src/main.c \
+       ../src/main.c \
        common/services/clock/sam3u/sysclk.c               \
        common/services/delay/sam/cycle_counter.c          \
        common/services/sleepmgr/sam/sleepmgr.c            \
@@ -43,7 +43,7 @@ ASSRCS =
 
 # List of include paths.
 INC_PATH = \
-       ../ubuild/src \
+       ../src/ \
        common/boards                                      \
        common/services/delay                              \
        common/services/clock                              \
