@@ -83,8 +83,9 @@ struct HeliumDevice {
 		// set pots for sane simv
 		libusb_control_transfer(m_usb, 0x40|0x80, 0x1B, 0x0707, 'a', buf, 4, 100);
 		// set adcc for bipolar sequenced mode
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xAD, 0x8FCC, 0, buf, 1, 100);
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0004, 0x003C, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xAD, 0xF5CC, 0, buf, 1, 100);
+		// set timer for 1us keepoff, 20us period
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0004, 0x003E, buf, 1, 100);
 		
 		std::lock_guard<std::mutex> lock(m_state);
 		m_requested_sampleno = m_in_sampleno = m_out_sampleno = 0;
@@ -100,6 +101,7 @@ struct HeliumDevice {
 	void stop() {
 		uint8_t buf[4];
 		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0000, 0x0000, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0x3D, 0x0000, 0x0000, buf, 1, 100);
 	}
 	
 	bool submit_out_transfer(libusb_transfer* t) {
@@ -226,7 +228,7 @@ int main()
 	const size_t len = (1<<14);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
-		out[i] = (1<<15) + uint16_t(cos(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
+		out[i] = (1<<15) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
 	}
 	uint16_t in_v[len];
 	uint16_t in_i[len];
