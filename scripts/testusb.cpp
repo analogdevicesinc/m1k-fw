@@ -131,7 +131,7 @@ struct HeliumDevice {
 	void handle_in_transfer(libusb_transfer* t) {
 		std::cerr << "handle_in_transfer " << m_in_sampleno << std::endl;
 		
-		auto buf = (uint16_t*) (t->buffer + 2);
+		auto buf = (uint16_t*) t->buffer;
 		for (size_t i = 0; i < chunk_size; i++) {
 			m_dest_buf_v[m_in_sampleno  ] = be16toh(buf[i]);
 			m_dest_buf_i[m_in_sampleno++] = be16toh(buf[i+chunk_size]);
