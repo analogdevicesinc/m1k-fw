@@ -9,11 +9,16 @@ bool reset = false;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
-volatile uint32_t slot_offset_out = 0;
-volatile uint32_t slot_offset_in = 0;
-volatile uint32_t packet_index_out = 0;
-volatile uint32_t packet_index_in = 0;
-
+volatile uint32_t slot_offset = 0;
+volatile uint32_t packet_index = 0;
+static uint32_t main_buf[10];
+uint8_t* ret_data = (uint8_t*)main_buf;
+static uint32_t zero = 0;
+static uint32_t scratch = 0;
+uint16_t va = 0;
+uint16_t vb = 0;
+uint16_t ia = 0;
+uint16_t ib = 0;
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
@@ -39,15 +44,6 @@ static twi_options_t TWIM_CONFIG =
 	.smbus = 0,
 };
 
-static uint32_t main_buf[10];
-uint16_t* sample_view = (uint16_t*)main_buf;
-uint8_t* main_buf_loopback = (uint8_t*)main_buf;
-uint8_t* ret_data = (uint8_t*)main_buf;
-static uint32_t zero = 0;
-static uint32_t scratch = 0;
-uint16_t va = 0;
-uint16_t vb = 0;
-
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
 	flash_read_unique_id(uid, 4);
@@ -59,12 +55,12 @@ void init_build_usb_serial_number(void) {
 
 void TC0_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 0);
-	if ((stat & TC_SR_CPAS) > 0) {
+	if ((stat & TC_SR_CPCS) > 0) {
 		// SYNC & CNV H->L
 		pio_clear(PIOA, CNV|N_SYNC);
-		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset_out];
-		USART1->US_TPR = &zero;
-		USART1->US_RPR = &packets_in[packet_index_in].data_a[slot_offset_in];
+		USART0->US_TPR = &packets_out[packet_index].data_a[slot_offset];
+		USART1->US_TPR = &va;
+		USART1->US_RPR = &packets_in[packet_index].data_a[slot_offset];
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
@@ -77,9 +73,8 @@ void TC0_Handler(void) {
 		pio_set(PIOA, CNV);
 		cpu_delay_us(3, F_CPU);
 		pio_clear(PIOA, CNV);
-		USART1->US_TPR = &zero;
-		//USART1->US_RPR = &packets_in[packet_index_in].data_b[slot_offset_in];
-		USART1->US_RPR = &scratch;
+		USART1->US_TPR = &ia;
+		USART1->US_RPR = &packets_in[packet_index].data_b[slot_offset];
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		// wait until transfers completes
@@ -88,26 +83,14 @@ void TC0_Handler(void) {
 		pio_set(PIOA, CNV|N_SYNC);
 		pio_clear(PIOA, N_LDAC);
 		pio_set(PIOA, N_LDAC);
-		slot_offset_in += 1;
-		slot_offset_out += 1;
-	}
-	// RC match, housekeeping and USB as needed
-	if ((stat & TC_SR_CPCS) > 0) {
-		if (slot_offset_out > 255) {
+		slot_offset += 1;
+		if (slot_offset > 255) {
 			pio_set(PIOA, IO0);
-			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_in]), sizeof(IN_packet), main_vendor_bulk_in_received);
-			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
-			slot_offset_in = 0;
-			slot_offset_out = 0;
-		if (packet_index_in == 1)
-			packet_index_in = 0;
-		else
-			packet_index_in = 1;
-		if (packet_index_out == 1)
-			packet_index_out = 0;
-		else
-			packet_index_out = 1;
-		pio_clear(PIOA, IO0);
+			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
+			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
+			slot_offset = 0;
+			packet_index ^= 1;
+			pio_clear(PIOA, IO0);
 		}
 	}
 }
@@ -266,10 +249,6 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
-	for (uint32_t i=0; i<(2*sizeof(IN_packet)); i++)
-		((uint8_t*) packets_in)[i] = 0;
-	for (uint32_t i=0; i<(2*sizeof(OUT_packet)); i++)
-		((uint8_t*) packets_out)[i] = 0;
 	while (true) {
 		cpu_delay_us(100, F_CPU);
 		if (!reset)
@@ -335,32 +314,7 @@ bool main_setup_handle(void) {
 			}
 			case 0xAD: {
 				va = Swap16(udd_g_ctrlreq.req.wValue);
-				vb = Swap16(udd_g_ctrlreq.req.wIndex);
-				pio_clear(PIOA, CNV);
-				USART1->US_TPR = &va;
-				USART2->US_TPR = &vb;
-				USART1->US_RPR = &scratch;
-				USART2->US_RPR = &scratch;
-				USART1->US_TCR = 2;
-				USART1->US_RCR = 2;
-				USART2->US_TCR = 2;
-				USART2->US_RCR = 2;
-				while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
-				while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-				pio_set(PIOA, CNV);
-				cpu_delay_us(1, F_CPU);
-				pio_clear(PIOA, CNV);
-				USART1->US_TPR = &zero;
-				USART2->US_TPR = &zero;
-				USART1->US_RPR = &scratch;
-				USART2->US_RPR = &scratch;
-				USART1->US_TCR = 2;
-				USART1->US_RCR = 2;
-				USART2->US_TCR = 2;
-				USART2->US_RCR = 2;
-				while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
-				while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-				pio_set(PIOA, CNV);
+				ia = Swap16(udd_g_ctrlreq.req.wIndex);
 				break;
 			}
 			case 0x1B: {
@@ -380,10 +334,8 @@ bool main_setup_handle(void) {
 				if (udd_g_ctrlreq.req.wValue < 1)
 					tc_stop(TC0, 0);
 				else {
-					slot_offset_out = 0;
-					slot_offset_in = 0;
-					packet_index_out = 0;
-					packet_index_in = 0;
+					slot_offset = 0;
+					packet_index = 0;
 					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
 					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
 					tc_start(TC0, 0);

@@ -83,7 +83,7 @@ struct HeliumDevice {
 		// set pots for sane simv
 		libusb_control_transfer(m_usb, 0x40|0x80, 0x1B, 0x0707, 'a', buf, 4, 100);
 		// set adcc for bipolar sequenced mode
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xAD, 0xF5CC, 0, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xAD, 0xF1C0, 0xF5C0, buf, 1, 100);
 		// set timer for 1us keepoff, 20us period
 		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0004, 0x003E, buf, 1, 100);
 		
