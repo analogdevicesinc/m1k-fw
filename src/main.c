@@ -94,6 +94,7 @@ void TC0_Handler(void) {
 	// RC match, housekeeping and USB as needed
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (slot_offset_out > 255) {
+			pio_set(PIOA, IO0);
 			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_in]), sizeof(IN_packet), main_vendor_bulk_in_received);
 			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset_in = 0;
@@ -106,6 +107,7 @@ void TC0_Handler(void) {
 			packet_index_out = 0;
 		else
 			packet_index_out = 1;
+		pio_clear(PIOA, IO0);
 		}
 	}
 }
@@ -119,6 +121,14 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART1);
 	pmc_enable_periph_clk(ID_USART2);
 	pmc_enable_periph_clk(ID_TC0);
+
+
+// GPIO
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA0, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA1, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA2, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
+
 
 // LED
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB10, PIO_DEFAULT);
