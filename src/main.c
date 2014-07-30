@@ -11,10 +11,7 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 volatile uint32_t slot_offset = 0;
 volatile uint32_t packet_index = 0;
-static uint32_t main_buf[10];
-uint8_t* ret_data = (uint8_t*)main_buf;
-static uint32_t zero = 0;
-static uint32_t scratch = 0;
+uint8_t* ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
 uint16_t ia = 0;
@@ -60,12 +57,16 @@ void TC0_Handler(void) {
 		pio_clear(PIOA, CNV|N_SYNC);
 		USART0->US_TPR = &packets_out[packet_index].data_a[slot_offset];
 		USART1->US_TPR = &va;
-		USART1->US_RPR = &packets_in[packet_index].data_a[slot_offset];
+		USART1->US_RPR = &packets_in[packet_index].data_a_v[slot_offset];
+		USART2->US_TPR = &vb;
+		USART2->US_RPR = &packets_in[packet_index].data_b_v[slot_offset];
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
+		USART2->US_TCR = 2;
+		USART2->US_RCR = 2;
 		// wait until transactions complete
-		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
+		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
@@ -74,11 +75,15 @@ void TC0_Handler(void) {
 		cpu_delay_us(3, F_CPU);
 		pio_clear(PIOA, CNV);
 		USART1->US_TPR = &ia;
-		USART1->US_RPR = &packets_in[packet_index].data_b[slot_offset];
+		USART1->US_RPR = &packets_in[packet_index].data_a_i[slot_offset];
+		USART2->US_TPR = &ib;
+		USART2->US_RPR = &packets_in[packet_index].data_b_i[slot_offset];
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
+		USART2->US_TCR = 2;
+		USART2->US_RCR = 2;
 		// wait until transfers completes
-		while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
+		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
 		pio_set(PIOA, CNV|N_SYNC);
 		pio_clear(PIOA, N_LDAC);
@@ -312,11 +317,6 @@ bool main_setup_handle(void) {
 				reset = true;
 				break;
 			}
-			case 0xAD: {
-				va = Swap16(udd_g_ctrlreq.req.wValue);
-				ia = Swap16(udd_g_ctrlreq.req.wIndex);
-				break;
-			}
 			case 0x1B: {
 				uint8_t r1 = udd_g_ctrlreq.req.wValue&0xFF;
 				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
@@ -328,6 +328,16 @@ bool main_setup_handle(void) {
 				uint8_t cmd = udd_g_ctrlreq.req.wIndex&0xFF;
 				uint8_t addr = (udd_g_ctrlreq.req.wIndex>>8)&0xFF;
 				write_dac(cmd, addr, udd_g_ctrlreq.req.wValue);
+				break;
+			}
+			case 0xCA: { // config A
+				va = Swap16(udd_g_ctrlreq.req.wValue);
+				ia = Swap16(udd_g_ctrlreq.req.wIndex);
+				break;
+			}
+			case 0xCB: {
+				vb = Swap16(udd_g_ctrlreq.req.wValue);
+				ib = Swap16(udd_g_ctrlreq.req.wIndex);
 				break;
 			}
 			case 0xC5: {

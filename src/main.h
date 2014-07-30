@@ -2,9 +2,10 @@
 #define _MAIN_H_
 
 typedef struct IN_packet{
-//	uint16_t frame_number;
-	uint16_t data_a[256];
-	uint16_t data_b[256];
+	uint16_t data_a_v[256];
+	uint16_t data_a_i[256];
+	uint16_t data_b_i[256];
+	uint16_t data_b_v[256];
 } IN_packet;
 
 typedef struct OUT_packet{

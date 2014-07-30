@@ -74,7 +74,7 @@ struct HeliumDevice {
 	void config_sync(uint64_t sample_rate, uint64_t sample_count) {
 		m_sample_rate = sample_rate;
 		m_sample_count = sample_count;
-		m_in_transfers.alloc(6, m_usb, 0x81, LIBUSB_TRANSFER_TYPE_BULK, 1024, 1000, in_completion, this);
+		m_in_transfers.alloc(6, m_usb, 0x81, LIBUSB_TRANSFER_TYPE_BULK, 2048, 1000, in_completion, this);
 		m_out_transfers.alloc(6, m_usb, 0x02, LIBUSB_TRANSFER_TYPE_BULK, 2048, 1000, out_completion, this);
 	}
 	
@@ -82,8 +82,9 @@ struct HeliumDevice {
 		uint8_t buf[4];
 		// set pots for sane simv
 		libusb_control_transfer(m_usb, 0x40|0x80, 0x1B, 0x0707, 'a', buf, 4, 100);
-		// set adcc for bipolar sequenced mode
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xAD, 0xF1C0, 0xF5C0, buf, 1, 100);
+		// set adcs for bipolar sequenced mode
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xCA, 0xF1C0, 0xF5C0, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xCB, 0xF1C0, 0xF5C0, buf, 1, 100);
 		// set timer for 1us keepoff, 20us period
 		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0004, 0x003E, buf, 1, 100);
 		
@@ -133,8 +134,10 @@ struct HeliumDevice {
 		
 		auto buf = (uint16_t*) t->buffer;
 		for (size_t i = 0; i < chunk_size; i++) {
-			m_dest_buf_v[m_in_sampleno  ] = be16toh(buf[i]);
-			m_dest_buf_i[m_in_sampleno++] = be16toh(buf[i+chunk_size]);
+			m_dest_buf_v_a[m_in_sampleno  ] = be16toh(buf[i]);
+			m_dest_buf_i_a[m_in_sampleno  ] = be16toh(buf[i+chunk_size]);
+			m_dest_buf_v_b[m_in_sampleno  ] = be16toh(buf[i+chunk_size*2]);
+			m_dest_buf_i_b[m_in_sampleno++] = be16toh(buf[i+chunk_size*3]);
 		}
 		
 		if (m_in_sampleno >= m_sample_count) {
@@ -161,10 +164,12 @@ struct HeliumDevice {
 	uint16_t m_requested_sampleno;
 	uint64_t m_in_sampleno;
 	uint64_t m_out_sampleno;
-	
+
 	uint16_t* m_src_buf;
-	uint16_t* m_dest_buf_v;
-	uint16_t* m_dest_buf_i;
+	uint16_t* m_dest_buf_v_a;
+	uint16_t* m_dest_buf_i_a;
+	uint16_t* m_dest_buf_v_b;
+	uint16_t* m_dest_buf_i_b;
 };
 
 /// Runs in USB thread
@@ -225,19 +230,23 @@ int main()
 		std::cerr << "Device not found" << std::endl;
 	}
 	
-	const size_t len = (1<<14);
+	const size_t len = (1<<10);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
 		out[i] = (1<<15) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
 	}
-	uint16_t in_v[len];
-	uint16_t in_i[len];
+	uint16_t in_v_a[len];
+	uint16_t in_v_b[len];
+	uint16_t in_i_a[len];
+	uint16_t in_i_b[len];
 		
 	HeliumDevice dev(handle);
 	
 	dev.m_src_buf = out;
-	dev.m_dest_buf_v = in_v;
-	dev.m_dest_buf_i = in_i;
+	dev.m_dest_buf_v_a = in_v_a;
+	dev.m_dest_buf_v_b = in_v_b;
+	dev.m_dest_buf_i_a = in_i_a;
+	dev.m_dest_buf_i_b = in_i_b;
 	
 	dev.claim();
 	dev.config_sync(0, len);
@@ -247,7 +256,7 @@ int main()
 	dev.release();
 	
 	for (size_t i=0; i<len; i++) {
-		std::cout << out[i] << ", " << in_v[i] << ", " << in_i[i] << std::endl;
+		std::cout << out[i] << ", " << in_v_a[i] << ", " << in_i_a[i] << ", " << in_v_b[i] << ", " << in_i_b[i] << std::endl;
 	}
 
 	exit(0); //TODO: stop libusb properly
