@@ -5,7 +5,7 @@ PRJ_PATH = asf
 ARCH = cortex-m3
 
 # Target part: none, sam3n4 or sam4l4aa
-PART = sam3u2c
+PART = sam3u1c
 
 # Application target name. Given with suffix .a for library and .elf for a
 # standalone application.
@@ -84,8 +84,8 @@ LIBS =  \
        m
 
 # Path relative to top level directory pointing to a linker script.
-LINKER_SCRIPT_FLASH = sam/utils/linker_scripts/sam3u/sam3u2/gcc/flash.ld
-LINKER_SCRIPT_SRAM  = sam/utils/linker_scripts/sam3u/sam3u2/gcc/sram.ld
+LINKER_SCRIPT_FLASH = sam/utils/linker_scripts/sam3u/sam3u1/gcc/flash.ld
+LINKER_SCRIPT_SRAM  = sam/utils/linker_scripts/sam3u/sam3u1/gcc/sram.ld
 
 # Path relative to top level directory pointing to a linker script.
 DEBUG_SCRIPT_FLASH = sam/boards/sam3u_ek/debug_scripts/gcc/sam3u_ek_flash.gdb
@@ -124,7 +124,7 @@ CPPFLAGS = \
        -D ARM_MATH_CM3=true                               \
        -D BOARD=SAM3U_EK                                  \
        -D UDD_ENABLE                                      \
-       -D __SAM3U2C__                                     \
+       -D __SAM3U1C__                                     \
        -D printf=iprintf
 
 # Extra flags to use when linking
