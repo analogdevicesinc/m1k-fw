@@ -1,3 +1,4 @@
 [submodule "asf"]
 	path = asf
 	url = https://github.com/avrxml/asf.git
+	ignore = dirty
