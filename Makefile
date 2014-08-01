@@ -1,4 +1,5 @@
 flash: cleanLocal all
+	@ echo -ne "\nMaximum Stack Size: $$(cat $$(find -name \*.su) | awk '{s+=$$2} END {print s}')\n\n"
 	- python -c "import usb;usb.core.find(idVendor=0x0456,idProduct=0xcee2).ctrl_transfer(0x40|0x80, 0xBB, 0, 0, 1)" 2&>1 > /dev/null
 	@ sleep 1
 	- sudo python ./scripts/sam-ba.py

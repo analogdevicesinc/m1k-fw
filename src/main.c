@@ -50,8 +50,8 @@ void init_build_usb_serial_number(void) {
 	}
 }
 
-void TC0_Handler(void) {
-	uint32_t stat = tc_get_status(TC0, 0);
+void TC1_Handler(void) {
+	uint32_t stat = tc_get_status(TC0, 1);
 	if ((stat & TC_SR_CPCS) > 0) {
 		// SYNC & CNV H->L
 		pio_clear(PIOA, CNV|N_SYNC);
@@ -108,7 +108,7 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART0);
 	pmc_enable_periph_clk(ID_USART1);
 	pmc_enable_periph_clk(ID_USART2);
-	pmc_enable_periph_clk(ID_TC0);
+	pmc_enable_periph_clk(ID_TC1);
 
 
 // GPIO
@@ -196,24 +196,9 @@ void hardware_init(void) {
 
 // CLOCK3 = MCLK/32
 // counts to RC
-	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
-	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
-	NVIC_EnableIRQ(TC0_IRQn);
-}
-
-void write_dac(uint8_t cmd, uint8_t addr, uint16_t val) {
-	uint32_t b[3];
-	pio_clear(PIOA, N_SYNC);
-	b[0] = cmd << 3 | addr;
-	b[1] = val >> 8;
-	b[2] = val >> 8;
-	usart_putchar(USART0, b[0]);
-	usart_putchar(USART0, b[1]);
-	usart_putchar(USART0, b[2]);
-	while(!((USART0->US_CSR & US_CSR_TXEMPTY) > 0));
-	pio_set(PIOA, N_SYNC);
-	pio_set(PIOA, N_LDAC);
-	pio_clear(PIOA, N_LDAC);
+	tc_init(TC0, 1, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
+	tc_enable_interrupt(TC0, 1, TC_IER_CPAS | TC_IER_CPCS);
+	NVIC_EnableIRQ(TC1_IRQn);
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -324,12 +309,6 @@ bool main_setup_handle(void) {
 				write_pots(ch, r1, r2);
 				break;
 			}
-			case 0x3D: {
-				uint8_t cmd = udd_g_ctrlreq.req.wIndex&0xFF;
-				uint8_t addr = (udd_g_ctrlreq.req.wIndex>>8)&0xFF;
-				write_dac(cmd, addr, udd_g_ctrlreq.req.wValue);
-				break;
-			}
 			case 0xCA: { // config A
 				va = Swap16(udd_g_ctrlreq.req.wValue);
 				ia = Swap16(udd_g_ctrlreq.req.wIndex);
@@ -342,13 +321,13 @@ bool main_setup_handle(void) {
 			}
 			case 0xC5: {
 				if (udd_g_ctrlreq.req.wValue < 1)
-					tc_stop(TC0, 0);
+					tc_stop(TC0, 1);
 				else {
 					slot_offset = 0;
 					packet_index = 0;
-					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
-					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
-					tc_start(TC0, 0);
+					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
+					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
+					tc_start(TC0, 1);
 				}
 				break;
 			}

@@ -11,7 +11,7 @@ import usb
 
 print "please wait..."
 
-raw = open("./helium.bin").read()
+raw = open("./m1000.bin").read()
 raw += '\x00'*(256-len(raw)%256)
 
 fw = bitstring.ConstBitStream(bytes=raw)
