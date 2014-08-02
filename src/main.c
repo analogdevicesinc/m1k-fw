@@ -74,6 +74,7 @@ void TC1_Handler(void) {
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
+		cpu_delay_us(1, F_CPU);
 		pio_set(PIOA, CNV);
 		cpu_delay_us(3, F_CPU);
 		pio_clear(PIOA, CNV);
