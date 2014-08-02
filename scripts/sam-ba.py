@@ -30,10 +30,10 @@ flashBase = 0x80000
 offset = 0
 
 def getStr():
-	return ''.join(map(chr, dev.read(0x82, 512, 1, 100)))
+	return ''.join(map(chr, dev.read(0x82, 512, 1)))
 
 def putStr(x):
-	return dev.write(0x01, x, 1, 100)
+	return dev.write(0x01, x, 1)
 
 # erase flash
 putStr("W400E0804,5A000005#")
