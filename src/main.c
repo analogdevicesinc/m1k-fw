@@ -10,13 +10,42 @@ uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 volatile uint32_t slot_offset = 0;
-volatile uint32_t packet_index = 0;
-volatile bool received_out;
 uint8_t* ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
 uint16_t ia = 0;
 uint16_t ib = 0;
+
+
+#define num_packets 2
+
+volatile bool sampling = 0;
+
+/// Packet index used for sampling
+volatile unsigned out_sample_packet = 0;
+/// Next packet index to be received
+volatile unsigned out_transfer_packet = 0;
+/// Number of packets available to read
+volatile unsigned out_packets_available = 0;
+
+
+/// Packet index used for sampling
+volatile unsigned in_sample_packet = 0;
+/// Next packet index to be sent
+volatile unsigned in_transfer_packet = 0;
+/// Number of packets available to write
+volatile unsigned in_packets_available = 0;
+
+/// Transfer currently active
+volatile bool out_active = false;
+volatile bool in_active = false;
+
+IN_packet packets_in[num_packets];
+OUT_packet packets_out[num_packets];
+
+/// 
+volatile bool in_sending = 0;
+volatile bool out_sending = 0;
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
@@ -53,16 +82,23 @@ void init_build_usb_serial_number(void) {
 
 void TC1_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 1);
-	if (!received_out)
-		return;
 	if ((stat & TC_SR_CPCS) > 0) {
+		pio_set(PIOA, IO0);
+		
+		unsigned out_index = out_sample_packet;
+		unsigned in_index = in_sample_packet;
+
+		if (out_packets_available == 0 || in_packets_available == num_packets) {
+			return;
+		}
+		
 		// SYNC & CNV H->L
 		pio_clear(PIOA, CNV|N_SYNC);
-		USART0->US_TPR = &packets_out[packet_index].data_a[slot_offset];
+		USART0->US_TPR = &packets_out[out_index].data_a[slot_offset];
 		USART1->US_TPR = &va;
-		USART1->US_RPR = &packets_in[packet_index].data_a_v[slot_offset];
+		USART1->US_RPR = &packets_in[in_index].data_a_v[slot_offset];
 		USART2->US_TPR = &vb;
-		USART2->US_RPR = &packets_in[packet_index].data_b_v[slot_offset];
+		USART2->US_RPR = &packets_in[in_index].data_b_v[slot_offset];
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
@@ -78,9 +114,9 @@ void TC1_Handler(void) {
 		cpu_delay_us(3, F_CPU);
 		pio_clear(PIOA, CNV);
 		USART1->US_TPR = &ia;
-		USART1->US_RPR = &packets_in[packet_index].data_a_i[slot_offset];
+		USART1->US_RPR = &packets_in[in_index].data_a_i[slot_offset];
 		USART2->US_TPR = &ib;
-		USART2->US_RPR = &packets_in[packet_index].data_b_i[slot_offset];
+		USART2->US_RPR = &packets_in[in_index].data_b_i[slot_offset];
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		USART2->US_TCR = 2;
@@ -95,11 +131,15 @@ void TC1_Handler(void) {
 		slot_offset += 1;
 		pio_clear(PIOA, IO3);
 		if (slot_offset > 255) {
-			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
-			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index^1]), sizeof(OUT_packet), main_vendor_bulk_out_received);
-			slot_offset = 0;
-			packet_index ^= 1;
+			out_packets_available--;
+			in_packets_available++;
+			
+			out_sample_packet = (out_sample_packet + 1) % num_packets;
+			in_sample_packet  = (in_sample_packet + 1) % num_packets;
+			
+			slot_offset = 0;			
 		}
+		pio_clear(PIOA, IO0);
 	}
 }
 
@@ -231,8 +271,8 @@ int main(void)
 	sysclk_init();
 	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
-	// enable WDT for "fairly short"
-	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
+	// enable WDT for 0.5s
+	wdt_init(WDT, WDT_MR_WDRSTEN, 500000, 500000);
 	// setup peripherals
 	hardware_init();
 	// start USB
@@ -243,7 +283,25 @@ int main(void)
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
 	while (true) {
-		cpu_delay_us(100, F_CPU);
+		if (sampling) {
+			if (!in_active && in_packets_available != 0) {
+				in_active = true;
+				udi_vendor_bulk_in_run((uint8_t *)&(packets_in[in_transfer_packet]), sizeof(IN_packet), main_vendor_bulk_in_received);
+			}
+			
+			if (!out_active && out_packets_available != num_packets) {
+				out_active = true;
+				udi_vendor_bulk_out_run((uint8_t *)&(packets_out[out_transfer_packet]), sizeof(OUT_packet), main_vendor_bulk_out_received);
+			}
+		} else {
+			if (in_active) {
+				udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
+			}
+			if (out_active) {
+				udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
+			}
+		}
+		
 		if (!reset)
 			wdt_restart(WDT);
 		if (reset)
@@ -323,16 +381,23 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0xC5: {
-				if (udd_g_ctrlreq.req.wValue < 1)
+				if (udd_g_ctrlreq.req.wValue < 1) {
 					tc_stop(TC0, 1);
-				else {
-					received_out = false;
+					sampling = false;
+				} else {
+					sampling = 1;
+					out_sample_packet = 0;
+					out_transfer_packet = 0;
+					out_packets_available = 0;
+
+					in_sample_packet = 0;
+					in_transfer_packet = 0;
+					in_packets_available = 0;
+					
 					slot_offset = 0;
-					packet_index = 0;
 					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
 					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
 					tc_start(TC0, 1);
-					udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 				}
 				break;
 			}
@@ -349,10 +414,12 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 {
 	UNUSED(nb_transfered);
 	UNUSED(ep);
+	in_active = false;
 	if (UDD_EP_TRANSFER_OK != status) {
 		return;
-	}
-	else {
+	} else {
+		in_transfer_packet = (in_transfer_packet + 1) % num_packets;
+		in_packets_available -= 1;
 	}
 }
 
@@ -360,10 +427,11 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(ep);
+	out_active = false;
 	if (UDD_EP_TRANSFER_OK != status) {
 		return;
-	}
-	else {
-		received_out = true;
+	} else {
+		out_transfer_packet = (out_transfer_packet + 1) % num_packets;
+		out_packets_available += 1;
 	}
 }

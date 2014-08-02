@@ -13,9 +13,6 @@ typedef struct OUT_packet{
 	uint32_t data_b[256];
 } OUT_packet;
 
-IN_packet packets_in[2];
-OUT_packet packets_out[2];
-
 bool main_vendor_enable(void);
 
 void main_vendor_disable(void);

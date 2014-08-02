@@ -105,7 +105,7 @@ struct HeliumDevice {
 	}
 	
 	bool submit_out_transfer(libusb_transfer* t) {
-		if (m_sample_count == 0 || m_out_sampleno < m_sample_count + 512) { //TODO: firmware bug that we have to send an extra packet
+		if (m_sample_count == 0 || m_out_sampleno < m_sample_count) {
 			std::cerr << "submit_out_transfer " << m_out_sampleno << std::endl;
 			auto buf = (uint32_t*) t->buffer;
 			for (size_t i = 0; i < chunk_size; i++) {
