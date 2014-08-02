@@ -11,6 +11,7 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 volatile uint32_t slot_offset = 0;
 volatile uint32_t packet_index = 0;
+volatile bool received_out;
 uint8_t* ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
@@ -52,6 +53,8 @@ void init_build_usb_serial_number(void) {
 
 void TC1_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 1);
+	if (!received_out)
+		return;
 	if ((stat & TC_SR_CPCS) > 0) {
 		// SYNC & CNV H->L
 		pio_clear(PIOA, CNV|N_SYNC);
@@ -92,7 +95,7 @@ void TC1_Handler(void) {
 		if (slot_offset > 255) {
 			pio_set(PIOA, IO0);
 			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
-			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
+			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index^1]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset = 0;
 			packet_index ^= 1;
 			pio_clear(PIOA, IO0);
@@ -323,11 +326,13 @@ bool main_setup_handle(void) {
 				if (udd_g_ctrlreq.req.wValue < 1)
 					tc_stop(TC0, 1);
 				else {
+					received_out = false;
 					slot_offset = 0;
 					packet_index = 0;
 					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
 					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
 					tc_start(TC0, 1);
+					udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 				}
 				break;
 			}
@@ -359,5 +364,6 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		return;
 	}
 	else {
+		received_out = true;
 	}
 }

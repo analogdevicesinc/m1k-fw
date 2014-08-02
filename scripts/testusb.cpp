@@ -102,7 +102,6 @@ struct HeliumDevice {
 	void stop() {
 		uint8_t buf[4];
 		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0000, 0x0000, buf, 1, 100);
-		libusb_control_transfer(m_usb, 0x40|0x80, 0x3D, 0x0000, 0x0000, buf, 1, 100);
 	}
 	
 	bool submit_out_transfer(libusb_transfer* t) {
@@ -230,7 +229,7 @@ int main()
 		std::cerr << "Device not found" << std::endl;
 	}
 	
-	const size_t len = (1<<10);
+	const size_t len = (1<<12);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
 		out[i] = (1<<15) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
