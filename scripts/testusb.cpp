@@ -133,10 +133,10 @@ struct HeliumDevice {
 		
 		auto buf = (uint16_t*) t->buffer;
 		for (size_t i = 0; i < chunk_size; i++) {
-			m_dest_buf_v_a[m_in_sampleno  ] = be16toh(buf[i]);
-			m_dest_buf_i_a[m_in_sampleno  ] = be16toh(buf[i+chunk_size]);
-			m_dest_buf_v_b[m_in_sampleno  ] = be16toh(buf[i+chunk_size*2]);
-			m_dest_buf_i_b[m_in_sampleno++] = be16toh(buf[i+chunk_size*3]);
+			m_dest_buf_v_a[m_in_sampleno  ] = (buf[i*2]);
+			m_dest_buf_i_a[m_in_sampleno  ] = (buf[i*2+1]);
+			m_dest_buf_v_b[m_in_sampleno  ] = (buf[i*2+512]);
+			m_dest_buf_i_b[m_in_sampleno++] = (buf[i*2+512+1]);
 		}
 		
 		if (m_in_sampleno >= m_sample_count) {
@@ -229,10 +229,10 @@ int main()
 		std::cerr << "Device not found" << std::endl;
 	}
 	
-	const size_t len = (1<<12);
+	const size_t len = (1<<16);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
-		out[i] = (1<<15) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
+		out[i] = (1<<13) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<6)-1))*double((1<<13)-1));
 	}
 	uint16_t in_v_a[len];
 	uint16_t in_v_b[len];
