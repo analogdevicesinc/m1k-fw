@@ -86,7 +86,7 @@ struct HeliumDevice {
 		libusb_control_transfer(m_usb, 0x40|0x80, 0xCA, 0xF1C0, 0xF5C0, buf, 1, 100);
 		libusb_control_transfer(m_usb, 0x40|0x80, 0xCB, 0xF1C0, 0xF5C0, buf, 1, 100);
 		// set timer for 1us keepoff, 20us period
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0004, 0x003E, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0001, 0x000e, buf, 1, 100);
 		
 		std::lock_guard<std::mutex> lock(m_state);
 		m_requested_sampleno = m_in_sampleno = m_out_sampleno = 0;
@@ -229,10 +229,10 @@ int main()
 		std::cerr << "Device not found" << std::endl;
 	}
 	
-	const size_t len = (1<<12);
+	const size_t len = (1<<16);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
-		out[i] = (1<<15) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<14)-1));
+		out[i] = (1<<13) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<13)-1));
 	}
 	uint16_t in_v_a[len];
 	uint16_t in_v_b[len];

@@ -10,8 +10,16 @@ uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 volatile uint32_t slot_offset = 0;
-volatile uint32_t packet_index = 0;
+volatile uint32_t packet_index_in = 0;
+volatile uint32_t packet_index_out = 0;
+volatile uint32_t packet_index_send_in = 0;
+volatile uint32_t packet_index_send_out = 0;
 volatile bool received_out;
+volatile bool sending_in;
+volatile bool sending_out;
+volatile bool send_out;
+volatile bool send_in;
+volatile bool a = true;
 uint8_t* ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
@@ -54,15 +62,16 @@ void init_build_usb_serial_number(void) {
 void TC1_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 1);
 	if (!received_out)
-		return;
+		slot_offset = 0;
 	if ((stat & TC_SR_CPCS) > 0) {
+		if (a) {
 		// SYNC & CNV H->L
 		pio_clear(PIOA, CNV|N_SYNC);
-		USART0->US_TPR = &packets_out[packet_index].data_a[slot_offset];
+		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset];
 		USART1->US_TPR = &va;
-		USART1->US_RPR = &packets_in[packet_index].data_a_v[slot_offset];
+		USART1->US_RPR = &packets_in[packet_index_in].data_a_v[slot_offset];
 		USART2->US_TPR = &vb;
-		USART2->US_RPR = &packets_in[packet_index].data_b_v[slot_offset];
+		USART2->US_RPR = &packets_in[packet_index_in].data_b_v[slot_offset];
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
@@ -71,35 +80,43 @@ void TC1_Handler(void) {
 		// wait until transactions complete
 		while(!((USART2->US_CSR&US_CSR_TXEMPTY) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
+		pio_set(PIOA, CNV|N_SYNC);
+		a ^= true;
+		return;
+		}
+		if (!a) {
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
-		cpu_delay_us(1, F_CPU);
-		pio_set(PIOA, CNV);
-		cpu_delay_us(3, F_CPU);
 		pio_clear(PIOA, CNV);
 		USART1->US_TPR = &ia;
-		USART1->US_RPR = &packets_in[packet_index].data_a_i[slot_offset];
+		USART1->US_RPR = &packets_in[packet_index_in].data_a_i[slot_offset];
 		USART2->US_TPR = &ib;
-		USART2->US_RPR = &packets_in[packet_index].data_b_i[slot_offset];
+		USART2->US_RPR = &packets_in[packet_index_in].data_b_i[slot_offset];
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		USART2->US_TCR = 2;
 		USART2->US_RCR = 2;
 		// wait until transfers completes
+		while(!((USART1->US_CSR&US_CSR_TXEMPTY) > 0));
 		while(!((USART2->US_CSR&US_CSR_TXEMPTY) > 0));
-		cpu_delay_us(1, F_CPU);
 		// SYNC & CNV L->H (after all transfers complete)
-		pio_set(PIOA, CNV|N_SYNC);
 		pio_clear(PIOA, N_LDAC);
 		pio_set(PIOA, N_LDAC);
 		slot_offset += 1;
-		pio_clear(PIOA, IO3);
+		a ^= true;
+		pio_set(PIOA, CNV);
+		}
+		if (slot_offset > 127) {
+			packet_index_send_out = packet_index_out^1;
+			send_out = true;
+		}
 		if (slot_offset > 255) {
-			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
-			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index^1]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset = 0;
-			packet_index ^= 1;
+			packet_index_send_in = packet_index_in;
+			packet_index_in ^= 1;
+			packet_index_out ^= 1;
+			send_in = true;
 		}
 	}
 }
@@ -244,7 +261,16 @@ int main(void)
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
 	while (true) {
-		cpu_delay_us(100, F_CPU);
+		if ((!sending_in) & send_in) {
+			send_in = false;
+			sending_in = true;
+			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_send_in]), sizeof(IN_packet), main_vendor_bulk_in_received);
+		}
+		if ((!sending_out) & send_out) {
+			send_out = false;
+			sending_out = true;
+			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_send_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
+		}
 		if (!reset)
 			wdt_restart(WDT);
 		if (reset)
@@ -291,10 +317,10 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0xEE: {
-				Pio *p_pio = (Pio *)((uint32_t)PIOA + (PIO_DELTA * ((udd_g_ctrlreq.req.wValue&0xFF) >> 5)));
-				ret_data[0] = (p_pio->PIO_ODSR & (1 << (udd_g_ctrlreq.req.wValue& 0x1F))) != 0;
-				ptr = ret_data;
-				size = 1;
+				uint32_t x = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
+				ret_data[0] = (x > 0);
+				ptr = (uint8_t*)&ret_data;
+				size=1;
 				break;
 			}
 			case 0x0E: {
@@ -329,11 +355,13 @@ bool main_setup_handle(void) {
 				else {
 					received_out = false;
 					slot_offset = 0;
-					packet_index = 0;
+					packet_index_in = 0;
+					packet_index_out = 0;
+					packet_index_send_out = 0;
+					send_out = 1;
 					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
 					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
 					tc_start(TC0, 1);
-					udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 				}
 				break;
 			}
@@ -354,6 +382,7 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 		return;
 	}
 	else {
+		sending_in = false;
 	}
 }
 
@@ -366,5 +395,6 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	}
 	else {
 		received_out = true;
+		sending_out = false;
 	}
 }
