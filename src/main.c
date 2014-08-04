@@ -14,11 +14,12 @@ volatile uint32_t packet_index_in = 0;
 volatile uint32_t packet_index_out = 0;
 volatile uint32_t packet_index_send_in = 0;
 volatile uint32_t packet_index_send_out = 0;
-volatile bool received_out;
+volatile bool send_in;
+volatile bool send_out;
 volatile bool sending_in;
 volatile bool sending_out;
-volatile bool send_out;
-volatile bool send_in;
+volatile bool sent_in;
+volatile bool sent_out;
 volatile bool a = true;
 uint8_t* ret_data[16];
 uint16_t va = 0;
@@ -61,7 +62,7 @@ void init_build_usb_serial_number(void) {
 
 void TC1_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 1);
-	if (!received_out)
+	if (!sent_out)
 		slot_offset = 0;
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (a) {
@@ -353,12 +354,18 @@ bool main_setup_handle(void) {
 				if (udd_g_ctrlreq.req.wValue < 1)
 					tc_stop(TC0, 1);
 				else {
-					received_out = false;
+					a = false;
+					sent_out = false;
+					sent_in = false;
+					sending_in = false;
+					sending_out = false;
+					send_out = true;
+					send_in = false;
 					slot_offset = 0;
 					packet_index_in = 0;
 					packet_index_out = 0;
 					packet_index_send_out = 0;
-					send_out = 1;
+					packet_index_send_in = 0;
 					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
 					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
 					tc_start(TC0, 1);
@@ -394,7 +401,7 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		return;
 	}
 	else {
-		received_out = true;
+		sent_out = true;
 		sending_out = false;
 	}
 }
