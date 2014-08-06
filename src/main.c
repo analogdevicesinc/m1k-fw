@@ -63,7 +63,7 @@ void init_build_usb_serial_number(void) {
 void TC1_Handler(void) {
 	uint32_t stat = tc_get_status(TC0, 1);
 	if (!sent_out)
-		slot_offset = 0;
+		return;
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (a) {
 		// SYNC & CNV H->L
@@ -108,7 +108,7 @@ void TC1_Handler(void) {
 		a ^= true;
 		pio_set(PIOA, CNV);
 		}
-		if (slot_offset > 127) {
+		if (slot_offset == 127) {
 			packet_index_send_out = packet_index_out^1;
 			send_out = true;
 		}
@@ -354,7 +354,7 @@ bool main_setup_handle(void) {
 				if (udd_g_ctrlreq.req.wValue < 1)
 					tc_stop(TC0, 1);
 				else {
-					a = false;
+					a = true;
 					sent_out = false;
 					sent_in = false;
 					sending_in = false;
@@ -368,7 +368,6 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
 					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
-					tc_start(TC0, 1);
 				}
 				break;
 			}
@@ -401,6 +400,8 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		return;
 	}
 	else {
+		if (sent_out == false)
+			tc_start(TC0, 1);
 		sent_out = true;
 		sending_out = false;
 	}
