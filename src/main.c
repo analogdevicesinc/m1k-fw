@@ -69,12 +69,11 @@ void TC1_Handler(void) {
 		USART2->US_TCR = 2;
 		USART2->US_RCR = 2;
 		// wait until transactions complete
-		while(!((USART2->US_CSR&US_CSR_TXEMPTY) > 0));
+		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
-		cpu_delay_us(1, F_CPU);
 		pio_set(PIOA, CNV);
 		cpu_delay_us(3, F_CPU);
 		pio_clear(PIOA, CNV);
@@ -87,19 +86,19 @@ void TC1_Handler(void) {
 		USART2->US_TCR = 2;
 		USART2->US_RCR = 2;
 		// wait until transfers completes
-		while(!((USART2->US_CSR&US_CSR_TXEMPTY) > 0));
-		cpu_delay_us(1, F_CPU);
+		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
 		pio_set(PIOA, CNV|N_SYNC);
 		pio_clear(PIOA, N_LDAC);
 		pio_set(PIOA, N_LDAC);
 		slot_offset += 1;
-		pio_clear(PIOA, IO3);
 		if (slot_offset > 255) {
+			pio_set(PIOA, IO0);
 			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index]), sizeof(IN_packet), main_vendor_bulk_in_received);
 			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index^1]), sizeof(OUT_packet), main_vendor_bulk_out_received);
 			slot_offset = 0;
 			packet_index ^= 1;
+			pio_clear(PIOA, IO0);
 		}
 	}
 }
