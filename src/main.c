@@ -64,10 +64,10 @@ void TC1_Handler(void) {
 		USART2->US_TPR = &vb;
 		USART2->US_RPR = &packets_in[packet_index].data_b_v[slot_offset];
 		USART0->US_TCR = 3;
-		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
-		USART2->US_TCR = 2;
+		USART1->US_TCR = 2;
 		USART2->US_RCR = 2;
+		USART2->US_TCR = 2;
 		// wait until transactions complete
 		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
@@ -191,6 +191,9 @@ void hardware_init(void) {
 	USART0->US_PTCR = US_PTCR_TXTEN;
 	USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
+
+	USART1->US_MR |= US_MR_INACK;
+	USART2->US_MR |= US_MR_INACK;
 
 // 100khz I2C
 	twi_reset(TWI0);
