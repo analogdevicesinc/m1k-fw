@@ -67,19 +67,19 @@ void TC1_Handler(void) {
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (a) {
 		// SYNC & CNV H->L
-		pio_clear(PIOA, CNV|N_SYNC);
 		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset];
 		USART1->US_TPR = &va;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a_v[slot_offset];
 		USART2->US_TPR = &vb;
 		USART2->US_RPR = &packets_in[packet_index_in].data_b_v[slot_offset];
+		pio_clear(PIOA, CNV|N_SYNC);
 		USART0->US_TCR = 3;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		USART2->US_TCR = 2;
 		USART2->US_RCR = 2;
 		// wait until transactions complete
-		while(!((USART2->US_CSR&US_CSR_TXEMPTY) > 0));
+		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 		pio_set(PIOA, CNV|N_SYNC);
 		a ^= true;
@@ -89,18 +89,17 @@ void TC1_Handler(void) {
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
-		pio_clear(PIOA, CNV);
 		USART1->US_TPR = &ia;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a_i[slot_offset];
 		USART2->US_TPR = &ib;
 		USART2->US_RPR = &packets_in[packet_index_in].data_b_i[slot_offset];
+		pio_clear(PIOA, CNV);
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		USART2->US_TCR = 2;
 		USART2->US_RCR = 2;
 		// wait until transfers completes
-		while(!((USART1->US_CSR&US_CSR_TXEMPTY) > 0));
-		while(!((USART2->US_CSR&US_CSR_TXEMPTY) > 0));
+		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
 		pio_clear(PIOA, N_LDAC);
 		pio_set(PIOA, N_LDAC);
@@ -166,7 +165,7 @@ void hardware_init(void) {
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA21A_RXD1, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA20A_TXD1, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
-
+	pio_set(PIOA, 1<<21);
 // ADC_CNV
 	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA26, PIO_DEFAULT);
 
@@ -210,7 +209,8 @@ void hardware_init(void) {
 	USART0->US_PTCR = US_PTCR_TXTEN;
 	USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
-
+	USART1->US_MR |= US_MR_INACK;
+	USART2->US_MR |= US_MR_INACK;
 // 100khz I2C
 	twi_reset(TWI0);
 	twi_enable_master_mode(TWI0);
