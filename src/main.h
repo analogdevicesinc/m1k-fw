@@ -9,8 +9,8 @@ typedef struct IN_packet{
 } IN_packet;
 
 typedef struct OUT_packet{
-	uint32_t data_a[256];
-	uint32_t data_b[256];
+	uint16_t data_a[256];
+	uint16_t data_b[256];
 } OUT_packet;
 
 IN_packet packets_in[2];

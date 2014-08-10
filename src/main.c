@@ -26,6 +26,8 @@ uint16_t va = 0;
 uint16_t vb = 0;
 uint16_t ia = 0;
 uint16_t ib = 0;
+uint8_t da = 0;
+uint8_t db = 0;
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
@@ -67,13 +69,15 @@ void TC1_Handler(void) {
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (a) {
 		// SYNC & CNV H->L
-		USART0->US_TPR = &packets_out[packet_index_out].data_a[slot_offset];
+		USART0->US_TPR = &da;
+		USART0->US_TNPR = &packets_out[packet_index_out].data_a[slot_offset];
 		USART1->US_TPR = &va;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a_v[slot_offset];
 		USART2->US_TPR = &vb;
 		USART2->US_RPR = &packets_in[packet_index_in].data_b_v[slot_offset];
 		pio_clear(PIOA, CNV|N_SYNC);
-		USART0->US_TCR = 3;
+		USART0->US_TCR = 1;
+		USART0->US_TNCR = 2;
 		USART1->US_RCR = 2;
 		USART1->US_TCR = 2;
 		USART2->US_RCR = 2;
@@ -89,23 +93,28 @@ void TC1_Handler(void) {
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
+		USART0->US_TPR = &db;
+		USART0->US_TNPR = &packets_out[packet_index_out].data_b[slot_offset];
 		USART1->US_TPR = &ia;
 		USART1->US_RPR = &packets_in[packet_index_in].data_a_i[slot_offset];
 		USART2->US_TPR = &ib;
 		USART2->US_RPR = &packets_in[packet_index_in].data_b_i[slot_offset];
-		pio_clear(PIOA, CNV);
+		pio_clear(PIOA, CNV|N_SYNC);
+		USART0->US_TCR = 1;
+		USART0->US_TNCR = 2;
 		USART1->US_TCR = 2;
 		USART1->US_RCR = 2;
 		USART2->US_TCR = 2;
 		USART2->US_RCR = 2;
 		// wait until transfers completes
 		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
+		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
 		pio_clear(PIOA, N_LDAC);
 		pio_set(PIOA, N_LDAC);
 		slot_offset += 1;
 		a ^= true;
-		pio_set(PIOA, CNV);
+		pio_set(PIOA, CNV|N_SYNC);
 		}
 		if (slot_offset == 127) {
 			packet_index_send_out = packet_index_out^1;
@@ -348,6 +357,11 @@ bool main_setup_handle(void) {
 			case 0xCB: {
 				vb = Swap16(udd_g_ctrlreq.req.wValue);
 				ib = Swap16(udd_g_ctrlreq.req.wIndex);
+				break;
+			}
+			case 0xCD: {
+				da = Swap16(udd_g_ctrlreq.req.wValue) & 0xFF;
+				db = Swap16(udd_g_ctrlreq.req.wIndex) & 0xFF;
 				break;
 			}
 			case 0xC5: {
