@@ -75,7 +75,7 @@ struct HeliumDevice {
 		m_sample_rate = sample_rate;
 		m_sample_count = sample_count;
 		m_in_transfers.alloc(6, m_usb, 0x81, LIBUSB_TRANSFER_TYPE_BULK, 2048, 1000, in_completion, this);
-		m_out_transfers.alloc(6, m_usb, 0x02, LIBUSB_TRANSFER_TYPE_BULK, 2048, 1000, out_completion, this);
+		m_out_transfers.alloc(6, m_usb, 0x02, LIBUSB_TRANSFER_TYPE_BULK, 1024, 1000, out_completion, this);
 	}
 	
 	void start() {
@@ -83,10 +83,10 @@ struct HeliumDevice {
 		// set pots for sane simv
 		libusb_control_transfer(m_usb, 0x40|0x80, 0x1B, 0x0707, 'a', buf, 4, 100);
 		// set adcs for bipolar sequenced mode
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xCA, 0xF1C0, 0xF5C0, buf, 1, 100);
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xCB, 0xF1C0, 0xF5C0, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xCA, 0xF120, 0xF520, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xCB, 0xF120, 0xF520, buf, 1, 100);
 		// set timer for 1us keepoff, 20us period
-		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0001, 0x000e, buf, 1, 100);
+		libusb_control_transfer(m_usb, 0x40|0x80, 0xC5, 0x0001, 0x003e, buf, 1, 100);
 		
 		std::lock_guard<std::mutex> lock(m_state);
 		m_requested_sampleno = m_in_sampleno = m_out_sampleno = 0;
@@ -107,9 +107,9 @@ struct HeliumDevice {
 	bool submit_out_transfer(libusb_transfer* t) {
 		if (m_sample_count == 0 || m_out_sampleno < m_sample_count + 512) { //TODO: firmware bug that we have to send an extra packet
 			std::cerr << "submit_out_transfer " << m_out_sampleno << std::endl;
-			auto buf = (uint32_t*) t->buffer;
+			auto buf = (uint16_t*) t->buffer;
 			for (size_t i = 0; i < chunk_size; i++) {
-				buf[i] = buf[i+chunk_size] = htobe16(m_src_buf[m_out_sampleno++]) << 8;
+				buf[i] = buf[i+chunk_size] = htobe16(m_src_buf[m_out_sampleno++]);
 			}
 			
 			int r = libusb_submit_transfer(t);
@@ -232,7 +232,7 @@ int main()
 	const size_t len = (1<<16);
 	uint16_t out[len];
 	for (size_t i=0; i<len; i++) {
-		out[i] = (1<<13) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<13)-1));
+		out[i] = 0;//(1<<13) + uint16_t(sin(M_PI*2.0*double(i)/double((1<<8)-1))*double((1<<13)-1));
 	}
 	uint16_t in_v_a[len];
 	uint16_t in_v_b[len];

@@ -62,8 +62,8 @@ void init_build_usb_serial_number(void) {
 	}
 }
 
-void TC1_Handler(void) {
-	uint32_t stat = tc_get_status(TC0, 1);
+void TC0_Handler(void) {
+	uint32_t stat = tc_get_status(TC0, 0);
 	if (!sent_out)
 		return;
 	if ((stat & TC_SR_CPCS) > 0) {
@@ -75,7 +75,7 @@ void TC1_Handler(void) {
 		USART1->US_RPR = &packets_in[packet_index_in].data_a_v[slot_offset];
 		USART2->US_TPR = &vb;
 		USART2->US_RPR = &packets_in[packet_index_in].data_b_v[slot_offset];
-		pio_clear(PIOA, CNV|N_SYNC);
+		pio_clear(PIOA, N_SYNC);
 		USART0->US_TCR = 1;
 		USART0->US_TNCR = 2;
 		USART1->US_RCR = 2;
@@ -85,7 +85,7 @@ void TC1_Handler(void) {
 		// wait until transactions complete
 		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
-		pio_set(PIOA, CNV|N_SYNC);
+		pio_set(PIOA, N_SYNC);
 		a ^= true;
 		return;
 		}
@@ -99,7 +99,7 @@ void TC1_Handler(void) {
 		USART1->US_RPR = &packets_in[packet_index_in].data_a_i[slot_offset];
 		USART2->US_TPR = &ib;
 		USART2->US_RPR = &packets_in[packet_index_in].data_b_i[slot_offset];
-		pio_clear(PIOA, CNV|N_SYNC);
+		pio_clear(PIOA, N_SYNC);
 		USART0->US_TCR = 1;
 		USART0->US_TNCR = 2;
 		USART1->US_TCR = 2;
@@ -110,11 +110,11 @@ void TC1_Handler(void) {
 		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 		// SYNC & CNV L->H (after all transfers complete)
-		pio_clear(PIOA, N_LDAC);
-		pio_set(PIOA, N_LDAC);
+		//pio_clear(PIOA, N_LDAC);
+		//pio_set(PIOA, N_LDAC);
 		slot_offset += 1;
 		a ^= true;
-		pio_set(PIOA, CNV|N_SYNC);
+		pio_set(PIOA, N_SYNC);
 		}
 		if (slot_offset == 127) {
 			packet_index_send_out = packet_index_out^1;
@@ -138,12 +138,13 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART0);
 	pmc_enable_periph_clk(ID_USART1);
 	pmc_enable_periph_clk(ID_USART2);
+	pmc_enable_periph_clk(ID_TC0);
 	pmc_enable_periph_clk(ID_TC1);
 
 
 // GPIO
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA0, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA1, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA0, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA1, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA2, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
 
@@ -162,7 +163,7 @@ void hardware_init(void) {
 
 // DAC
 // LDAC_N
-	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA14, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_INPUT, PIO_PA14, PIO_DEFAULT);
 // CLR_N
 	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA15, PIO_DEFAULT);
 // SYNC_N
@@ -176,7 +177,7 @@ void hardware_init(void) {
 	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
 	pio_set(PIOA, 1<<21);
 // ADC_CNV
-	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA26, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_INPUT, PIO_PA26, PIO_DEFAULT);
 
 // CHB_ADC
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2, PIO_DEFAULT);
@@ -218,6 +219,7 @@ void hardware_init(void) {
 	USART0->US_PTCR = US_PTCR_TXTEN;
 	USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
+// flip "act like SPI" bit so it... acts like SPI
 	USART1->US_MR |= US_MR_INACK;
 	USART2->US_MR |= US_MR_INACK;
 // 100khz I2C
@@ -227,9 +229,10 @@ void hardware_init(void) {
 
 // CLOCK3 = MCLK/32
 // counts to RC
-	tc_init(TC0, 1, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
-	tc_enable_interrupt(TC0, 1, TC_IER_CPAS | TC_IER_CPCS);
-	NVIC_EnableIRQ(TC1_IRQn);
+	//tc_init(TC0, 1, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
+	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
+	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
+	NVIC_EnableIRQ(TC0_IRQn);
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -366,7 +369,7 @@ bool main_setup_handle(void) {
 			}
 			case 0xC5: {
 				if (udd_g_ctrlreq.req.wValue < 1)
-					tc_stop(TC0, 1);
+					tc_stop(TC0, 0);
 				else {
 					a = true;
 					sent_out = false;
@@ -380,8 +383,9 @@ bool main_setup_handle(void) {
 					packet_index_out = 0;
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
-					tc_write_ra(TC0, 1, udd_g_ctrlreq.req.wValue);
-					tc_write_rc(TC0, 1, udd_g_ctrlreq.req.wIndex);
+					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
+					tc_write_rb(TC0, 0, udd_g_ctrlreq.req.wIndex/3);
+					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
 				}
 				break;
 			}
@@ -414,8 +418,10 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 		return;
 	}
 	else {
-		if (sent_out == false)
+		if (sent_out == false) {
 			tc_start(TC0, 1);
+			tc_start(TC0, 0);
+		}
 		sent_out = true;
 		sending_out = false;
 	}
