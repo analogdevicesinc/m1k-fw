@@ -69,12 +69,12 @@ void TC0_Handler(void) {
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (a) {
 		// SYNC & CNV H->L
-		USART0->US_TPR = &da;
-		USART0->US_TNPR = &packets_out[packet_index_out].data_a[slot_offset];
-		USART1->US_TPR = &va;
-		USART1->US_RPR = &packets_in[packet_index_in].data_a_v[slot_offset];
-		USART2->US_TPR = &vb;
-		USART2->US_RPR = &packets_in[packet_index_in].data_b_v[slot_offset];
+		USART0->US_TPR = (uint32_t)(&da);
+		USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
+		USART1->US_TPR = (uint32_t)(&va);
+		USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
+		USART2->US_TPR = (uint32_t)(&vb);
+		USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
 		pio_clear(PIOA, N_SYNC);
 		USART0->US_TCR = 1;
 		USART0->US_TNCR = 2;
@@ -93,12 +93,12 @@ void TC0_Handler(void) {
 		// strobe SYNC, CNV out of phase for next words
 		// both need to be toggled between channel interactions
 		// cnv should not be \pm 20ns of a dio change
-		USART0->US_TPR = &db;
-		USART0->US_TNPR = &packets_out[packet_index_out].data_b[slot_offset];
-		USART1->US_TPR = &ia;
-		USART1->US_RPR = &packets_in[packet_index_in].data_a_i[slot_offset];
-		USART2->US_TPR = &ib;
-		USART2->US_RPR = &packets_in[packet_index_in].data_b_i[slot_offset];
+		USART0->US_TPR = (uint32_t)(&db);
+		USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
+		USART1->US_TPR = (uint32_t)(&ia);
+		USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
+		USART2->US_TPR = (uint32_t)(&ib);
+		USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
 		pio_clear(PIOA, N_SYNC);
 		USART0->US_TCR = 1;
 		USART0->US_TNCR = 2;
