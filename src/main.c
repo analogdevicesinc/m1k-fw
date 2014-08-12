@@ -21,7 +21,7 @@ volatile bool sending_out;
 volatile bool sent_in;
 volatile bool sent_out;
 volatile bool a = true;
-uint8_t* ret_data[16];
+uint8_t ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
 uint16_t ia = 0;
@@ -331,7 +331,7 @@ bool main_setup_handle(void) {
 			}
 			case 0xEE: {
 				uint32_t x = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
-				ret_data[0] = (x > 0);
+				ret_data[0] = (uint8_t)(x > 0);
 				ptr = (uint8_t*)&ret_data;
 				size=1;
 				break;
