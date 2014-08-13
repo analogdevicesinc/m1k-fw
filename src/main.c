@@ -384,7 +384,7 @@ bool main_setup_handle(void) {
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
 					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
-					tc_write_rb(TC0, 0, udd_g_ctrlreq.req.wIndex/3);
+					tc_write_rb(TC0, 0, udd_g_ctrlreq.req.wIndex-udd_g_ctrlreq.req.wIndex/5);
 					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
 				}
 				break;
