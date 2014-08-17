@@ -225,6 +225,7 @@ void hardware_init(void) {
 	twi_enable_master_mode(TWI0);
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
+
 // CLOCK3 = MCLK/32
 // counts to RC
 	tc_init(TC0, 1, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
@@ -360,8 +361,18 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0xCD: {
-				da = Swap16(udd_g_ctrlreq.req.wValue) & 0xFF;
-				db = Swap16(udd_g_ctrlreq.req.wIndex) & 0xFF;
+				// enable DAC internal reference
+				uint32_t x = 0xFFFFFFFF;
+				pio_clear(PIOA, N_SYNC);
+				USART0->US_TPR = &x;
+				USART0->US_TCR = 3;
+				while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
+				cpu_delay_us(10, F_CPU);
+				pio_set(PIOA, N_SYNC);
+				pio_clear(PIOA, N_LDAC);
+				pio_set(PIOA, N_LDAC);
+				da = udd_g_ctrlreq.req.wValue & 0xFF;
+				db = udd_g_ctrlreq.req.wIndex & 0xFF;
 				break;
 			}
 			case 0xC5: {
