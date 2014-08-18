@@ -20,7 +20,7 @@ volatile bool sending_in;
 volatile bool sending_out;
 volatile bool sent_in;
 volatile bool sent_out;
-volatile bool a = true;
+volatile bool channel_a = true;
 uint8_t ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
@@ -34,7 +34,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 	.baudrate     = 24000000,
 	.char_length   = US_MR_CHRL_8_BIT,
 	.spi_mode      = SPI_MODE_0,
-	.channel_mode  = US_MR_CHMODE_NORMAL
+	.channel_mode  = US_MR_CHMODE_NORMAL | US_MR_INACK
 };
 
 static  usart_spi_opt_t USART_SPI_DAC =
@@ -67,54 +67,45 @@ void TC0_Handler(void) {
 	if (!sent_out)
 		return;
 	if ((stat & TC_SR_CPCS) > 0) {
-		if (a) {
-		// SYNC & CNV H->L
-		USART0->US_TPR = (uint32_t)(&da);
-		USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
-		USART1->US_TPR = (uint32_t)(&va);
-		USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
-		USART2->US_TPR = (uint32_t)(&vb);
-		USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
-		pio_clear(PIOA, N_SYNC);
-		USART0->US_TCR = 1;
-		USART0->US_TNCR = 2;
-		USART1->US_RCR = 2;
-		USART1->US_TCR = 2;
-		USART2->US_RCR = 2;
-		USART2->US_TCR = 2;
-		// wait until transactions complete
-		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
-		pio_set(PIOA, N_SYNC);
-		a ^= true;
+		if (channel_a) {
+			USART0->US_TPR = (uint32_t)(&da);
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
+			USART1->US_TPR = (uint32_t)(&va);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
+			USART2->US_TPR = (uint32_t)(&vb);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
+			pio_clear(PIOA, N_SYNC);
+			USART0->US_TCR = 1;
+			USART0->US_TNCR = 2;
+			USART1->US_RCR = 2;
+			USART1->US_TCR = 2;
+			USART2->US_RCR = 2;
+			USART2->US_TCR = 2;
+			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
+			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
+			pio_set(PIOA, N_SYNC);
+			channel_a ^= true;
 		return;
 		}
-		if (!a) {
-		// strobe SYNC, CNV out of phase for next words
-		// both need to be toggled between channel interactions
-		// cnv should not be \pm 20ns of a dio change
-		USART0->US_TPR = (uint32_t)(&db);
-		USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
-		USART1->US_TPR = (uint32_t)(&ia);
-		USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
-		USART2->US_TPR = (uint32_t)(&ib);
-		USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
-		pio_clear(PIOA, N_SYNC);
-		USART0->US_TCR = 1;
-		USART0->US_TNCR = 2;
-		USART1->US_TCR = 2;
-		USART1->US_RCR = 2;
-		USART2->US_TCR = 2;
-		USART2->US_RCR = 2;
-		// wait until transfers completes
-		while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-		while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
-		// SYNC & CNV L->H (after all transfers complete)
-		//pio_clear(PIOA, N_LDAC);
-		//pio_set(PIOA, N_LDAC);
-		slot_offset += 1;
-		a ^= true;
-		pio_set(PIOA, N_SYNC);
+		if (!channel_a) {
+			USART0->US_TPR = (uint32_t)(&db);
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
+			USART1->US_TPR = (uint32_t)(&ia);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
+			USART2->US_TPR = (uint32_t)(&ib);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
+			pio_clear(PIOA, N_SYNC);
+			USART0->US_TCR = 1;
+			USART0->US_TNCR = 2;
+			USART1->US_TCR = 2;
+			USART1->US_RCR = 2;
+			USART2->US_TCR = 2;
+			USART2->US_RCR = 2;
+			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
+			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
+			slot_offset += 1;
+			channel_a ^= true;
+			pio_set(PIOA, N_SYNC);
 		}
 		if (slot_offset == 127) {
 			packet_index_send_out = packet_index_out^1;
@@ -175,7 +166,7 @@ void hardware_init(void) {
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA21A_RXD1, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA20A_TXD1, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
-	pio_set(PIOA, 1<<21);
+
 // ADC_CNV
 	pio_configure(PIOA, PIO_INPUT, PIO_PA26, PIO_DEFAULT);
 
@@ -219,9 +210,8 @@ void hardware_init(void) {
 	USART0->US_PTCR = US_PTCR_TXTEN;
 	USART1->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
 	USART2->US_PTCR = US_PTCR_TXTEN | US_PTCR_RXTEN;
-// flip "act like SPI" bit so it... acts like SPI
-	USART1->US_MR |= US_MR_INACK;
-	USART2->US_MR |= US_MR_INACK;
+
+
 // 100khz I2C
 	twi_reset(TWI0);
 	twi_enable_master_mode(TWI0);
@@ -229,8 +219,9 @@ void hardware_init(void) {
 
 
 // CLOCK3 = MCLK/32
-// counts to RC
-	//tc_init(TC0, 1, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE);
+// RA takes LDAC H->L
+// RB takes CNV L->H
+// RC takes CNV H->L, LDAC L->H
 	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
 	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
 	NVIC_EnableIRQ(TC0_IRQn);
@@ -367,7 +358,7 @@ bool main_setup_handle(void) {
 				// enable DAC internal reference
 				uint32_t x = 0xFFFFFFFF;
 				pio_clear(PIOA, N_SYNC);
-				USART0->US_TPR = &x;
+				USART0->US_TPR = (uint32_t)&x;
 				USART0->US_TCR = 3;
 				while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 				cpu_delay_us(10, F_CPU);
@@ -382,7 +373,8 @@ bool main_setup_handle(void) {
 				if (udd_g_ctrlreq.req.wValue < 1)
 					tc_stop(TC0, 0);
 				else {
-					a = true;
+					// how much state to reset?
+					channel_a = true;
 					sent_out = false;
 					sent_in = false;
 					sending_in = false;
@@ -394,6 +386,7 @@ bool main_setup_handle(void) {
 					packet_index_out = 0;
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
+					// so much
 					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
 					tc_write_rb(TC0, 0, udd_g_ctrlreq.req.wIndex-udd_g_ctrlreq.req.wIndex/5);
 					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
@@ -430,7 +423,6 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	}
 	else {
 		if (sent_out == false) {
-			tc_start(TC0, 1);
 			tc_start(TC0, 0);
 		}
 		sent_out = true;
