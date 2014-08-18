@@ -2,25 +2,25 @@
 #include "conf_usb.h"
 #include "conf_board.h"
 
-static bool main_b_vendor_enable = false;
 #define stringify(x)            #x
 #define xstringify(s) stringify(s)
-bool reset = false;
+static bool main_b_vendor_enable;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
-volatile uint32_t slot_offset = 0;
-volatile uint32_t packet_index_in = 0;
-volatile uint32_t packet_index_out = 0;
-volatile uint32_t packet_index_send_in = 0;
-volatile uint32_t packet_index_send_out = 0;
+volatile uint32_t slot_offset;
+volatile uint32_t packet_index_in;
+volatile uint32_t packet_index_out;
+volatile uint32_t packet_index_send_in;
+volatile uint32_t packet_index_send_out;
 volatile bool send_in;
 volatile bool send_out;
 volatile bool sending_in;
 volatile bool sending_out;
 volatile bool sent_in;
 volatile bool sent_out;
-volatile bool channel_a = true;
+volatile bool channel_a;
+volatile bool reset;
 uint8_t ret_data[16];
 uint16_t va = 0;
 uint16_t vb = 0;
