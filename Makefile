@@ -5,7 +5,7 @@ flash: cleanLocal all
 	- sudo python ./scripts/sam-ba.py
 
 cleanLocal:
-	rm -f *bin *elf *hex *lss *map *sym *o *d
+	rm -f *bin *elf *hex *lss *map *sym *.o *.d
 
 HW_VERSION=0
 GIT_VERSION=$(shell git describe --always --dirty='*')
