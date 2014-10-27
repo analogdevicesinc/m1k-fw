@@ -62,8 +62,8 @@ void init_build_usb_serial_number(void) {
 	}
 }
 
-void TC0_Handler(void) {
-	uint32_t stat = tc_get_status(TC0, 0);
+void TC2_Handler(void) {
+	uint32_t stat = tc_get_status(TC0, 2);
 	if (!sent_out)
 		return;
 	if ((stat & TC_SR_CPCS) > 0) {
@@ -131,11 +131,12 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART2);
 	pmc_enable_periph_clk(ID_TC0);
 	pmc_enable_periph_clk(ID_TC1);
+	pmc_enable_periph_clk(ID_TC2);
 
 
 // GPIO
-	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA0, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA1, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA0, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA1, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA2, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
 
@@ -154,7 +155,7 @@ void hardware_init(void) {
 
 // DAC
 // LDAC_N
-	pio_configure(PIOA, PIO_INPUT, PIO_PA14, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA30, PIO_DEFAULT);
 // CLR_N
 	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA15, PIO_DEFAULT);
 // SYNC_N
@@ -168,7 +169,7 @@ void hardware_init(void) {
 	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
 
 // ADC_CNV
-	pio_configure(PIOA, PIO_INPUT, PIO_PA26, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA31, PIO_DEFAULT);
 
 // CHB_ADC
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2, PIO_DEFAULT);
@@ -222,13 +223,14 @@ void hardware_init(void) {
 // RA takes LDAC H->L
 // RB takes CNV L->H
 // RC takes CNV H->L, LDAC L->H
-	tc_init(TC0, 0, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
-	tc_enable_interrupt(TC0, 0, TC_IER_CPAS | TC_IER_CPCS);
-	NVIC_EnableIRQ(TC0_IRQn);
+	tc_init(TC0, 2, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
+	tc_enable_interrupt(TC0, 2, TC_IER_CPAS | TC_IER_CPCS);
+	NVIC_EnableIRQ(TC2_IRQn);
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
+	
 	uint8_t v;
 	if (ch == 'a') {
 		p.chip = 0x2f;
@@ -371,7 +373,7 @@ bool main_setup_handle(void) {
 			}
 			case 0xC5: {
 				if (udd_g_ctrlreq.req.wValue < 1)
-					tc_stop(TC0, 0);
+					tc_stop(TC0, 2);
 				else {
 					// how much state to reset?
 					channel_a = true;
@@ -387,9 +389,9 @@ bool main_setup_handle(void) {
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
 					// so much
-					tc_write_ra(TC0, 0, udd_g_ctrlreq.req.wValue);
-					tc_write_rb(TC0, 0, udd_g_ctrlreq.req.wIndex-udd_g_ctrlreq.req.wIndex/5);
-					tc_write_rc(TC0, 0, udd_g_ctrlreq.req.wIndex);
+					tc_write_ra(TC0, 2, udd_g_ctrlreq.req.wValue);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wIndex-udd_g_ctrlreq.req.wIndex/5);
+					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wIndex);
 				}
 				break;
 			}
@@ -423,7 +425,7 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	}
 	else {
 		if (sent_out == false) {
-			tc_start(TC0, 0);
+			tc_start(TC0, 2);
 		}
 		sent_out = true;
 		sending_out = false;
