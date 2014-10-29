@@ -29,6 +29,14 @@ uint16_t ib = 0;
 uint8_t da = 0;
 uint8_t db = 0;
 
+pwm_channel_t PWM_CH;
+
+static pwm_clock_t PWM_SETTINGS = {
+	.ul_clka = 1000*100,
+	.ul_clkb = 0,
+	.ul_mck = 96000000
+};
+
 static  usart_spi_opt_t USART_SPI_ADC =
 {
 	.baudrate     = 24000000,
@@ -52,6 +60,7 @@ static twi_options_t TWIM_CONFIG =
 	.chip = 0,
 	.smbus = 0,
 };
+
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -131,6 +140,7 @@ void hardware_init(void) {
 	pmc_enable_periph_clk(ID_USART2);
 	pmc_enable_periph_clk(ID_TC0);
 	pmc_enable_periph_clk(ID_TC1);
+	pmc_enable_periph_clk(ID_PWM);
 	pmc_enable_periph_clk(ID_TC2);
 
 
@@ -142,8 +152,9 @@ void hardware_init(void) {
 
 
 // LED
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB10, PIO_DEFAULT);
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB9, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA28, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA29, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_PERIPH_B, PIO_PB15, PIO_DEFAULT);
 
 // PWR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
@@ -186,7 +197,7 @@ void hardware_init(void) {
 // CHA_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
 // CHA_OUT_10KSER
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB2, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
 // CHA_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 
@@ -195,7 +206,7 @@ void hardware_init(void) {
 // CHB_OUT_50OPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB6, PIO_DEFAULT);
 // CHB_OUT_10KSER
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB7, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB7, PIO_DEFAULT);
 // CHB_OUT_1MOPAR
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB8, PIO_DEFAULT);
 
@@ -226,6 +237,26 @@ void hardware_init(void) {
 	tc_init(TC0, 2, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
 	tc_enable_interrupt(TC0, 2, TC_IER_CPAS | TC_IER_CPCS);
 	NVIC_EnableIRQ(TC2_IRQn);
+
+	pwm_channel_disable(PWM, PWM_CHANNEL_0);
+	pwm_channel_disable(PWM, PWM_CHANNEL_1);
+	pwm_channel_disable(PWM, PWM_CHANNEL_2);
+	pwm_init(PWM, &PWM_SETTINGS);
+	PWM_CH.ul_prescaler = PWM_CMR_CPRE_CLKA;
+	PWM_CH.ul_period = 256;
+	PWM_CH.ul_duty = (uint32_t)(serial_number[0]);
+	PWM_CH.channel = PWM_CHANNEL_0;
+	pwm_channel_init(PWM, &PWM_CH);
+	PWM_CH.ul_duty = (uint32_t)(serial_number[1]);
+	PWM_CH.channel = PWM_CHANNEL_1;
+	pwm_channel_init(PWM, &PWM_CH);
+	PWM_CH.ul_duty = (uint32_t)(serial_number[2]);
+	PWM_CH.channel = PWM_CHANNEL_2;
+	pwm_channel_init(PWM, &PWM_CH);
+	pwm_channel_enable(PWM, PWM_CHANNEL_0);
+	pwm_channel_enable(PWM, PWM_CHANNEL_1);
+	pwm_channel_enable(PWM, PWM_CHANNEL_2);
+	
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {

@@ -83,4 +83,5 @@
 #include <sam/cycle_counter.h>
 #include <wdt.h>
 #include <tc.h>
+#include <pwm.h>
 #endif // ASF_H
