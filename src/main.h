@@ -41,6 +41,8 @@ void init_build_usb_serial_number(void);
 void hardware_init(void);
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2);
+void write_adm1177(uint8_t v);
+void read_adm1177(uint8_t b[], uint8_t c);
 
 void main_vendor_bulk_out_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_vendor_bulk_in_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);

@@ -295,7 +295,8 @@ void hardware_init(void) {
 	pwm_channel_enable(PWM, PWM_CHANNEL_0);
 	pwm_channel_enable(PWM, PWM_CHANNEL_1);
 	pwm_channel_enable(PWM, PWM_CHANNEL_2);
-	
+
+	write_adm1177(0b1010100);
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -317,6 +318,26 @@ void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
 	p.addr[0] = 0x11;
 	v = r2&0x7f;
 	twi_master_write(TWI0, &p);
+}
+
+void write_adm1177(uint8_t v) {
+	twi_packet_t p;
+	p.chip = 0x40; // 7b addr of '1177 w/ addr p grounded
+	p.addr_length = 1;
+	p.length = 0;
+	p.addr[0] = v;
+	twi_master_write(TWI0, &p);
+
+}
+
+void read_adm1177(uint8_t* b, uint8_t ct) {
+	twi_packet_t p;
+	p.chip = 0x40;
+	p.length = ct;
+	p.addr_length = 0;
+	// dump results straight to USB temp data buffer
+	p.buffer = b;
+	twi_master_read(TWI0, &p);
 }
 
 int main(void)
@@ -391,6 +412,12 @@ bool main_setup_handle(void) {
 						size = sizeof(fwversion);
 						break;
 				}
+				break;
+			}
+			case 0x17: {
+				size = 3;
+				read_adm1177(&ret_data, size);
+				ptr = (uint8_t*)&ret_data;
 				break;
 			}
 			case 0xEE: {
