@@ -13,6 +13,12 @@ typedef struct OUT_packet{
 	uint16_t data_b[256];
 } OUT_packet;
 
+typedef struct rgb {
+    uint8_t r;
+	uint8_t g;
+	uint8_t b;
+} rgb;
+
 IN_packet packets_in[2];
 OUT_packet packets_out[2];
 
@@ -23,6 +29,8 @@ void main_vendor_disable(void);
 void main_sof_action(void);
 
 void main_suspend_action(void);
+
+void h_to_rgb(uint8_t , rgb * c);
 
 void main_resume_action(void);
 
