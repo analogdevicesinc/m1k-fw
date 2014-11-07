@@ -190,7 +190,7 @@ void hardware_init(void) {
 	pio_configure(PIOB, PIO_PERIPH_B, PIO_PB15, PIO_DEFAULT);
 
 // PWR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
 
 // SDA
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
@@ -225,23 +225,19 @@ void hardware_init(void) {
 // CHB_SWMODE
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB20, PIO_DEFAULT);
 
-// CHA_OUT_1KOPAR
+// 50o to 2v5
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
-// CHA_OUT_50OPAR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
-// CHA_OUT_10KSER
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
-// CHA_OUT_1MOPAR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
-
-// CHA_OUT_1KOPAR
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB5, PIO_DEFAULT);
-// CHB_OUT_50OPAR
+// 50o to gnd
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB1, PIO_DEFAULT);
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB6, PIO_DEFAULT);
-// CHB_OUT_10KSER
+// feedback / sense
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB7, PIO_DEFAULT);
-// CHB_OUT_1MOPAR
+// output
+	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB8, PIO_DEFAULT);
+
 
 	usart_init_spi_master(USART0, &USART_SPI_DAC, F_CPU);
 	usart_enable_tx(USART0);
@@ -271,11 +267,14 @@ void hardware_init(void) {
 	tc_enable_interrupt(TC0, 2, TC_IER_CPAS | TC_IER_CPCS);
 	NVIC_EnableIRQ(TC2_IRQn);
 
+
+// set RGB LED to hue generated from UID
 	uint32_t uid[4];
 	rgb c;
 	flash_read_unique_id(uid, 4);
 	uint8_t h = uid[3] % 252;
 	h_to_rgb(h, &c);
+
 
 	pwm_channel_disable(PWM, PWM_CHANNEL_0); // PA28 - blue - PWMH0
 	pwm_channel_disable(PWM, PWM_CHANNEL_1); // PA29 - green - PWMH1
@@ -296,6 +295,7 @@ void hardware_init(void) {
 	pwm_channel_enable(PWM, PWM_CHANNEL_1);
 	pwm_channel_enable(PWM, PWM_CHANNEL_2);
 
+// continuous V&I conversion
 	write_adm1177(0b00010101);
 }
 
@@ -465,9 +465,17 @@ bool main_setup_handle(void) {
 				db = udd_g_ctrlreq.req.wIndex & 0xFF;
 				break;
 			}
-			case 0xC5: {
+			case 0xC9: {
 				if (udd_g_ctrlreq.req.wValue < 1)
+					pio_clear(PIOB, PIO_PB17);
+				else
+					pio_set(PIOB, PIO_PB17);
+				break;
+			}
+			case 0xC5: {
+				if (udd_g_ctrlreq.req.wValue < 1) { 
 					tc_stop(TC0, 2);
+				}
 				else {
 					// how much state to reset?
 					channel_a = true;
