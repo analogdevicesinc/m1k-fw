@@ -4,12 +4,12 @@
 |PA1|PIO1|user DIO 1|
 |PA2|PIO2|user DIO 2|
 |PA3|PIO3|user DIO 3|
-|PB0|UA11-IN0|ChA connect 50Ω to 2v5|
-|PB1|UA11-IN1|ChA connect 50Ω to GND|
+|PB0|UA11-IN0|50Ω from ChA to 2v5|
+|PB1|UA11-IN1|50Ω from ChA to GND|
 |PB2|UA11-IN2|ChA close voltage sense loop|
 |PB3|UA11-IN3|ChA connect output|
-|PB5|UB11-IN0|ChB 50Ω to 2v5 |
-|PB6|UB11-IN1|ChB connect 50Ω to gnd|
+|PB5|UB11-IN0|50Ω from ChB to 2v5 |
+|PB6|UB11-IN1|50Ω from ChB to GND|
 |PB7|UB11-IN2|ChB close voltage sense loop|
 |PB8|UB11-IN3|ChB connect output|
 |PB17|PWR_ENABLE|turn on power for analog components|
