@@ -1,0 +1,17 @@
+|IO Name|Net Name|Net Description|
+|-------|--------|---------------|
+|PA0|PIO0||
+|PA1|PIO1||
+|PA2|PIO2||
+|PA3|PIO3||
+|PB0|UA11-IN0|50o_to_2v5|
+|PB1|UA11-IN1|50o_to_gnd|
+|PB2|UA11-IN2|100o_to_vsense|
+|PB3|UA11-IN3|0o_to_output|
+|PB5|UB11-IN0|50o_to_2v5|
+|PB6|UB11-IN1|50o_to_gnd|
+|PB7|UB11-IN2|100o_to_vsense|
+|PB8|UB11-IN3|0o_to_output|
+|PB17|PWR_ENABLE|
+|PB19|SWMODE-A|
+|PB20|SWMODE-B|
