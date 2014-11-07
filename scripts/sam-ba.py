@@ -1,9 +1,8 @@
 # Copyright 2014 Ian Daniher, Analog Devices
 # Licensed under GPLv3
 # This is fully functional sam-ba client capable of loading a binary executable onto the internal flash of a sam3u processor.
-# This code is not affected by any of the bugs in the ROM
+# This code is not impacted by any of the bugs in the ROM
 
-import serial
 import bitstring
 import glob
 import time
