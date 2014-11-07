@@ -82,7 +82,7 @@ LIBS =  \
        m
 
 # Path relative to top level directory pointing to a linker script.
-LINKER_SCRIPT_FLASH = ../flash.ld
+LINKER_SCRIPT_FLASH = ../scripts/flash.ld
 
 # Path relative to top level directory pointing to a linker script.
 DEBUG_SCRIPT_FLASH = sam/boards/sam3u_ek/debug_scripts/gcc/sam3u_ek_flash.gdb
