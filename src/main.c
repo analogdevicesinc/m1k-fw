@@ -428,6 +428,14 @@ bool main_setup_handle(void) {
 				pio_toggle_pin(udd_g_ctrlreq.req.wValue&0xFF);
 				break;
 			}
+			case 0x50: {
+				pio_set_pin_low(udd_g_ctrlreq.req.wValue&0xFF);
+				break;
+			}
+			case 0x51: {
+				pio_set_pin_high(udd_g_ctrlreq.req.wValue&0xFF);
+				break;
+			}
 			case 0xBB: {
 				flash_clear_gpnvm(1);
 				reset = true;
