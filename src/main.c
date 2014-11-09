@@ -190,7 +190,7 @@ void hardware_init(void) {
 	pio_configure(PIOB, PIO_PERIPH_B, PIO_PB15, PIO_DEFAULT);
 
 // PWR
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB17, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
 
 // SDA
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
