@@ -39,7 +39,7 @@ pwm_channel_t PWM_CH;
 static pwm_clock_t PWM_SETTINGS = {
 	.ul_clka = 1e6,
 	.ul_clkb = 0,
-	.ul_mck = 96000000
+	.ul_mck = F_CPU
 };
 
 static  usart_spi_opt_t USART_SPI_ADC =
@@ -116,12 +116,7 @@ void TC2_Handler(void) {
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (channel_a) {
 			USART0->US_TPR = (uint32_t)(&da);
-			if (ma != DISABLED) {
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
-			}
-			else {
-				USART0->US_TNPR = (uint32_t)(&i0_dacA);
-			}
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&va);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&vb);
@@ -141,12 +136,7 @@ void TC2_Handler(void) {
 		}
 		if (!channel_a) {
 			USART0->US_TPR = (uint32_t)(&db);
-			if (mb != DISABLED) {
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
-			}
-			else {
-				USART0->US_TNPR = (uint32_t)(&(i0_dacB));
-			}
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&ia);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&ib);
@@ -315,14 +305,14 @@ void hardware_init(void) {
 
 }
 
-void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
+void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
 	
 	uint8_t v;
-	if (ch == 'a') {
+	if (ch == A) {
 		p.chip = 0x2f;
 	}
-	if (ch == 'b') {
+	if (ch == B) {
 		p.chip = 0x23;
 	}
 	p.length = 1;
@@ -487,8 +477,7 @@ void main_vendor_disable(void) {
 
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
-	uint16_t size = 1;
-	if (Udd_setup_is_in()) {
+	uint16_t size = 0;
 	if (Udd_setup_type() == USB_REQ_TYPE_VENDOR) {
 		switch (udd_g_ctrlreq.req.bRequest) {
 			case 0x00: { // Info
@@ -508,17 +497,6 @@ bool main_setup_handle(void) {
 				size = udd_g_ctrlreq.req.wIndex&0xFF;
 				read_adm1177(&ret_data, size);
 				ptr = (uint8_t*)&ret_data;
-				break;
-			}
-			case 0xEE: {
-				uint32_t x = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
-				ret_data[0] = (uint8_t)(x > 0);
-				ptr = (uint8_t*)&ret_data;
-				size=1;
-				break;
-			}
-			case 0x0E: {
-				pio_toggle_pin(udd_g_ctrlreq.req.wValue&0xFF);
 				break;
 			}
 			case 0x50: {
@@ -542,7 +520,7 @@ bool main_setup_handle(void) {
 				uint8_t r1 = udd_g_ctrlreq.req.wValue&0xFF;
 				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
 				uint8_t ch = udd_g_ctrlreq.req.wIndex&0xFF;
-				write_pots(ch, r1, r2);
+				write_ad5122(ch, r1, r2);
 				break;
 			}
 			case 0xCA: { // config A
@@ -596,9 +574,14 @@ bool main_setup_handle(void) {
 			}
 		}
 	}
-	}
-	udd_g_ctrlreq.payload = ptr;
 	udd_g_ctrlreq.payload_size = size;
+	if ( size == 0 ) {
+		udd_g_ctrlreq.callback = 0;
+		udd_g_ctrlreq.over_under_run = 0;
+	}
+	else {
+		udd_g_ctrlreq.payload = ptr;
+	}
 	return true;
 }
 
