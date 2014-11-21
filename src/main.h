@@ -1,6 +1,15 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+typedef enum chan_mode{
+	DISABLED = 0,
+	SVMI = 1,
+	SIMV = 2,
+} chan_mode;
+
+#define A 0
+#define B 1
+
 typedef struct IN_packet{
 	uint16_t data_a_v[256];
 	uint16_t data_a_i[256];
@@ -42,7 +51,9 @@ void hardware_init(void);
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2);
 void write_adm1177(uint8_t v);
+void write_ad5663(uint8_t conf, uint16_t data);
 void read_adm1177(uint8_t b[], uint8_t c);
+void set_mode(uint32_t chan, chan_mode m);
 
 void main_vendor_bulk_out_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_vendor_bulk_in_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);

@@ -5,6 +5,8 @@
 #define stringify(x)			#x
 #define xstringify(s) stringify(s)
 static bool main_b_vendor_enable;
+uint16_t i0_dacA = 26100;
+uint16_t i0_dacB = 26100;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
@@ -21,7 +23,10 @@ volatile bool sent_in;
 volatile bool sent_out;
 volatile bool channel_a;
 volatile bool reset;
+volatile chan_mode ma;
+volatile chan_mode mb;
 uint8_t ret_data[16];
+
 uint16_t va = 0;
 uint16_t vb = 0;
 uint16_t ia = 0;
@@ -111,7 +116,12 @@ void TC2_Handler(void) {
 	if ((stat & TC_SR_CPCS) > 0) {
 		if (channel_a) {
 			USART0->US_TPR = (uint32_t)(&da);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
+			if (ma != DISABLED) {
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
+			}
+			else {
+				USART0->US_TNPR = (uint32_t)(&i0_dacA);
+			}
 			USART1->US_TPR = (uint32_t)(&va);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&vb);
@@ -127,11 +137,16 @@ void TC2_Handler(void) {
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 			pio_set(PIOA, N_SYNC);
 			channel_a ^= true;
-		return;
+			return;
 		}
 		if (!channel_a) {
 			USART0->US_TPR = (uint32_t)(&db);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
+			if (mb != DISABLED) {
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
+			}
+			else {
+				USART0->US_TNPR = (uint32_t)(&(i0_dacB));
+			}
 			USART1->US_TPR = (uint32_t)(&ia);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&ib);
@@ -297,6 +312,7 @@ void hardware_init(void) {
 
 // continuous V&I conversion
 	write_adm1177(0b00010101);
+
 }
 
 void write_pots(uint8_t ch, uint8_t r1, uint8_t r2) {
@@ -337,6 +353,80 @@ void read_adm1177(uint8_t* b, uint8_t ct) {
 	twi_master_read(TWI0, &p);
 }
 
+void write_ad5663(uint8_t conf, uint16_t data) {
+	__disable_irq();
+	USART0->US_TPR = (uint32_t)(&conf);
+	USART0->US_TNPR = (uint32_t)(&data);
+	pio_clear(PIOA, N_SYNC);
+	cpu_delay_us(10, F_CPU);
+	USART0->US_TCR = 1;
+	USART0->US_TNCR = 2;
+	while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
+	cpu_delay_us(100, F_CPU);
+	pio_set(PIOA, N_SYNC);
+	__enable_irq();
+}
+
+void set_mode(uint32_t chan, chan_mode m) {
+	switch (chan) {
+		case A: {
+			switch (m) {
+				case DISABLED: {
+					ma = DISABLED;
+					pio_set(PIOB, PIO_PB19); // simv
+					pio_clear(PIOB, PIO_PB2);
+					pio_set(PIOB, PIO_PB3);
+					break;
+					}
+				case SVMI: {
+					ma = SVMI;
+					pio_clear(PIOB, PIO_PB19); // modeswitch = svmi
+					pio_clear(PIOB, PIO_PB2);
+					pio_clear(PIOB, PIO_PB3); // enable output
+					break;
+				}
+				case SIMV: {
+					ma = SIMV;
+					pio_set(PIOB, PIO_PB19); // simv
+					pio_clear(PIOB, PIO_PB3); // enable output
+					pio_clear(PIOB, PIO_PB2);
+					break;
+				}
+				default: {}
+			}
+			break;
+		}
+		case B: {
+			switch (m) {
+				case DISABLED: {
+					mb = DISABLED;
+					pio_set(PIOB, PIO_PB20); // simv
+					pio_clear(PIOB, PIO_PB7);
+					pio_set(PIOB, PIO_PB8); // disconnect output
+					break;
+					}
+				case SVMI: {
+					mb = SVMI;
+					pio_clear(PIOB, PIO_PB20); // modeswitch = svmi
+					pio_clear(PIOB, PIO_PB7);
+					pio_clear(PIOB, PIO_PB8); // enable output
+					break;
+				}
+				case SIMV: {
+					mb = SIMV;
+					pio_set(PIOB, PIO_PB19); // simv
+					pio_clear(PIOB, PIO_PB7);
+					pio_clear(PIOB, PIO_PB8); // enable output
+					break;
+				}
+				default: {}
+			}
+			break;
+		}
+		default : {}
+	}
+}
+
 int main(void)
 {
 	irq_initialize_vectors();
@@ -355,6 +445,9 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
+	cpu_delay_us(1000, F_CPU);
+	set_mode(A, DISABLED);
+	set_mode(B, DISABLED);
 	while (true) {
 		if ((!sending_in) & send_in) {
 			send_in = false;
@@ -436,6 +529,10 @@ bool main_setup_handle(void) {
 				pio_set_pin_high(udd_g_ctrlreq.req.wValue&0xFF);
 				break;
 			}
+			case 0x53: {
+				set_mode(udd_g_ctrlreq.req.wValue&0xF, udd_g_ctrlreq.req.wIndex&0xF);
+				break;
+			}
 			case 0xBB: {
 				flash_clear_gpnvm(1);
 				reset = true;
@@ -459,16 +556,8 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0xCD: {
-				// enable DAC internal reference
-				uint32_t x = 0xFFFFFFFF;
-				pio_clear(PIOA, N_SYNC);
-				USART0->US_TPR = (uint32_t)&x;
-				USART0->US_TCR = 3;
-				while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
-				cpu_delay_us(10, F_CPU);
-				pio_set(PIOA, N_SYNC);
-				pio_clear(PIOA, N_LDAC);
-				pio_set(PIOA, N_LDAC);
+				// enable internal reference
+				write_ad5663(0xFF, 0xFFFF);
 				da = udd_g_ctrlreq.req.wValue & 0xFF;
 				db = udd_g_ctrlreq.req.wIndex & 0xFF;
 				break;
