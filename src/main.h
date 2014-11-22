@@ -47,7 +47,8 @@ bool main_setup_handle(void);
 
 void init_build_usb_serial_number(void);
 
-void hardware_init(void);
+void init_hardware(void);
+void config_hardware(void);
 
 void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2);
 void write_adm1177(uint8_t v);

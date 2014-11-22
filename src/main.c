@@ -5,8 +5,6 @@
 #define stringify(x)			#x
 #define xstringify(s) stringify(s)
 static bool main_b_vendor_enable;
-uint16_t i0_dacA = 26100;
-uint16_t i0_dacB = 26100;
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
@@ -27,12 +25,14 @@ volatile chan_mode ma;
 volatile chan_mode mb;
 uint8_t ret_data[16];
 
-uint16_t va = 0;
-uint16_t vb = 0;
-uint16_t ia = 0;
-uint16_t ib = 0;
+uint16_t i0_dacA = 26100;
+uint16_t i0_dacB = 26100;
+uint16_t va = 0x20F1;
+uint16_t ia = 0x20F5;
+uint16_t vb = 0x20F1;
+uint16_t ib = 0x20F5;
 uint8_t da = 0;
-uint8_t db = 0;
+uint8_t db = 1;
 
 pwm_channel_t PWM_CH;
 
@@ -168,7 +168,7 @@ void TC2_Handler(void) {
 	}
 }
 
-void hardware_init(void) {
+void init_hardware(void) {
 // enable peripheral clock access
 	pmc_enable_periph_clk(ID_PIOA);
 	pmc_enable_periph_clk(ID_PIOB);
@@ -300,9 +300,24 @@ void hardware_init(void) {
 	pwm_channel_enable(PWM, PWM_CHANNEL_1);
 	pwm_channel_enable(PWM, PWM_CHANNEL_2);
 
-// continuous V&I conversion
-	write_adm1177(0b00010101);
+}
 
+void config_hardware() {
+	// continuous V&I conversion
+	write_adm1177(0b00010101);
+	cpu_delay_us(100, F_CPU);
+	// sane simv
+	write_ad5122(0, 0x30, 0x40);
+	cpu_delay_us(100, F_CPU);
+	write_ad5122(1, 0x30, 0x40);
+	cpu_delay_us(100, F_CPU);
+	// DAC internal reference
+	write_ad5663(0xFF, 0xFFFF);
+	cpu_delay_us(100, F_CPU);
+	set_mode(A, DISABLED);
+	cpu_delay_us(100, F_CPU);
+	set_mode(B, DISABLED);
+	cpu_delay_us(100, F_CPU);
 }
 
 void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
@@ -344,7 +359,6 @@ void read_adm1177(uint8_t* b, uint8_t ct) {
 }
 
 void write_ad5663(uint8_t conf, uint16_t data) {
-	__disable_irq();
 	USART0->US_TPR = (uint32_t)(&conf);
 	USART0->US_TNPR = (uint32_t)(&data);
 	pio_clear(PIOA, N_SYNC);
@@ -354,7 +368,6 @@ void write_ad5663(uint8_t conf, uint16_t data) {
 	while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 	cpu_delay_us(100, F_CPU);
 	pio_set(PIOA, N_SYNC);
-	__enable_irq();
 }
 
 void set_mode(uint32_t chan, chan_mode m) {
@@ -379,8 +392,8 @@ void set_mode(uint32_t chan, chan_mode m) {
 				case SIMV: {
 					ma = SIMV;
 					pio_set(PIOB, PIO_PB19); // simv
-					pio_clear(PIOB, PIO_PB3); // enable output
 					pio_clear(PIOB, PIO_PB2);
+					pio_clear(PIOB, PIO_PB3); // enable output
 					break;
 				}
 				default: {}
@@ -429,17 +442,19 @@ int main(void)
 	// enable WDT for "fairly short"
 	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
 	// setup peripherals
-	hardware_init();
+	init_hardware();
 	// start USB
+	/*for (uint8_t i = 0; i < 100; i++) {
+		cpu_delay_us(10, F_CPU);
+		wdt_restart(WDT);
+	}*/
+	cpu_delay_us(100, F_CPU);
 
 	udc_detach();
 	udc_stop();
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
-	cpu_delay_us(1000, F_CPU);
-	set_mode(A, DISABLED);
-	set_mode(B, DISABLED);
 	while (true) {
 		if ((!sending_in) & send_in) {
 			send_in = false;
@@ -518,35 +533,8 @@ bool main_setup_handle(void) {
 				reset = true;
 				break;
 			}
-			case 0x1B: {
-				uint8_t r1 = udd_g_ctrlreq.req.wValue&0xFF;
-				uint8_t r2 = (udd_g_ctrlreq.req.wValue>>8)&0xFF;
-				uint8_t ch = udd_g_ctrlreq.req.wIndex&0xFF;
-				write_ad5122(ch, r1, r2);
-				break;
-			}
-			case 0xCA: { // config A
-				va = Swap16(udd_g_ctrlreq.req.wValue);
-				ia = Swap16(udd_g_ctrlreq.req.wIndex);
-				break;
-			}
-			case 0xCB: {
-				vb = Swap16(udd_g_ctrlreq.req.wValue);
-				ib = Swap16(udd_g_ctrlreq.req.wIndex);
-				break;
-			}
-			case 0xCD: {
-				// enable internal reference
-				write_ad5663(0xFF, 0xFFFF);
-				da = udd_g_ctrlreq.req.wValue & 0xFF;
-				db = udd_g_ctrlreq.req.wIndex & 0xFF;
-				break;
-			}
-			case 0xC9: {
-				if (udd_g_ctrlreq.req.wValue < 1)
-					pio_clear(PIOB, PIO_PB17);
-				else
-					pio_set(PIOB, PIO_PB17);
+			case 0xCC: {
+				config_hardware();
 				break;
 			}
 			case 0xC5: {
