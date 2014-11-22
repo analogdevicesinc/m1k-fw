@@ -21,8 +21,9 @@ volatile bool sent_in;
 volatile bool sent_out;
 volatile bool channel_a;
 volatile bool reset;
-volatile chan_mode ma;
-volatile chan_mode mb;
+
+chan_mode ma = DISABLED;
+chan_mode mb = DISABLED;
 uint8_t ret_data[16];
 
 uint16_t i0_dacA = 26100;
@@ -226,9 +227,9 @@ void init_hardware(void) {
 	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA25B_SCK2, PIO_DEFAULT);
 
 // CHA_SWMODE
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB19, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB19, PIO_DEFAULT);
 // CHB_SWMODE
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB20, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB20, PIO_DEFAULT);
 
 // 50o to 2v5
 	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB0, PIO_DEFAULT);
@@ -240,8 +241,8 @@ void init_hardware(void) {
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB2, PIO_DEFAULT);
 	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB7, PIO_DEFAULT);
 // output
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB3, PIO_DEFAULT);
-	pio_configure(PIOB, PIO_OUTPUT_0, PIO_PB8, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB3, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB8, PIO_DEFAULT);
 
 
 	usart_init_spi_master(USART0, &USART_SPI_DAC, F_CPU);
@@ -313,11 +314,6 @@ void config_hardware() {
 	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
-	cpu_delay_us(100, F_CPU);
-	set_mode(A, DISABLED);
-	cpu_delay_us(100, F_CPU);
-	set_mode(B, DISABLED);
-	cpu_delay_us(100, F_CPU);
 }
 
 void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
@@ -444,10 +440,6 @@ int main(void)
 	// setup peripherals
 	init_hardware();
 	// start USB
-	/*for (uint8_t i = 0; i < 100; i++) {
-		cpu_delay_us(10, F_CPU);
-		wdt_restart(WDT);
-	}*/
 	cpu_delay_us(100, F_CPU);
 
 	udc_detach();
@@ -455,6 +447,8 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
+	write_ad5663(0, i0_dacA);
+	write_ad5663(1, i0_dacB);
 	while (true) {
 		if ((!sending_in) & send_in) {
 			send_in = false;
