@@ -537,6 +537,9 @@ bool main_setup_handle(void) {
 				}
 				else {
 					// how much state to reset?
+					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
+					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
+
 					channel_a = true;
 					sent_out = false;
 					sent_in = false;
