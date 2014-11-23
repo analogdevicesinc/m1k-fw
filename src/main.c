@@ -342,6 +342,7 @@ void write_adm1177(uint8_t v) {
 	p.chip = 0x58; // 7b addr of '1177 w/ addr p grounded
 	p.addr_length = 1;
 	p.addr[0] = v;
+	p.length = 0;
 	twi_master_write(TWI0, &p);
 
 }
@@ -351,6 +352,7 @@ void read_adm1177(uint8_t* b, uint8_t ct) {
 	p.chip = 0x58;
 	p.length = ct;
 	p.buffer = b;
+	p.addr_length = 0;
 	twi_master_read(TWI0, &p);
 }
 
