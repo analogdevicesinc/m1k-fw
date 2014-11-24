@@ -28,10 +28,8 @@ uint8_t ret_data[16];
 
 uint16_t i0_dacA = 26100;
 uint16_t i0_dacB = 26100;
-uint16_t va = 0x20F1;
-uint16_t ia = 0x20F5;
-uint16_t vb = 0x20F1;
-uint16_t ib = 0x20F5;
+uint16_t v_adc_conf = 0x20F1;
+uint16_t i_adc_conf = 0x20F7;
 uint8_t da = 0;
 uint8_t db = 1;
 
@@ -118,10 +116,10 @@ void TC2_Handler(void) {
 		if (channel_a) {
 			USART0->US_TPR = (uint32_t)(&da);
 			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
-			USART1->US_TPR = (uint32_t)(&va);
+			USART1->US_TPR = (uint32_t)(&v_adc_conf);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
-			USART2->US_TPR = (uint32_t)(&vb);
-			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
+			USART2->US_TPR = (uint32_t)(&i_adc_conf);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
 			pio_clear(PIOA, N_SYNC);
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
@@ -138,10 +136,10 @@ void TC2_Handler(void) {
 		if (!channel_a) {
 			USART0->US_TPR = (uint32_t)(&db);
 			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
-			USART1->US_TPR = (uint32_t)(&ia);
-			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
-			USART2->US_TPR = (uint32_t)(&ib);
-			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
+			USART1->US_TPR = (uint32_t)(&i_adc_conf);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
+			USART2->US_TPR = (uint32_t)(&v_adc_conf);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
 			pio_clear(PIOA, N_SYNC);
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
@@ -308,9 +306,9 @@ void config_hardware() {
 	write_adm1177(0b00010101);
 	cpu_delay_us(100, F_CPU);
 	// sane simv
-	write_ad5122(0, 0x30, 0x40);
+	write_ad5122(0, 0x70, 0x00);
 	cpu_delay_us(100, F_CPU);
-	write_ad5122(1, 0x30, 0x40);
+	write_ad5122(1, 0x70, 0x00);
 	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
