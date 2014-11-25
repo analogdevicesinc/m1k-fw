@@ -1,31 +1,12 @@
 #include <asf.h>
+#include "main.h"
 #include "conf_usb.h"
 #include "conf_board.h"
 
-#define stringify(x)			#x
-#define xstringify(s) stringify(s)
-static bool main_b_vendor_enable;
-uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
-const char hwversion[] = xstringify(HW_VERSION);
-const char fwversion[] = xstringify(FW_VERSION);
-volatile uint32_t slot_offset;
-volatile uint32_t packet_index_in;
-volatile uint32_t packet_index_out;
-volatile uint32_t packet_index_send_in;
-volatile uint32_t packet_index_send_out;
-volatile bool send_in;
-volatile bool send_out;
-volatile bool sending_in;
-volatile bool sending_out;
-volatile bool sent_in;
-volatile bool sent_out;
-volatile bool channel_a;
-volatile bool reset;
-
+const char hwversion[] = xstringify(HW_VERSION); 
+const char fwversion[] = xstringify(FW_VERSION); 
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
-uint8_t ret_data[16];
-
 uint16_t i0_dacA = 26100;
 uint16_t i0_dacB = 26100;
 uint16_t v_adc_conf = 0x20F1;
@@ -189,12 +170,11 @@ void init_hardware(void) {
 
 
 // LED
-	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA28, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA29, PIO_DEFAULT);
-	pio_configure(PIOB, PIO_PERIPH_B, PIO_PB15, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, LED_B, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, LED_G, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_PERIPH_B, LED_R, PIO_DEFAULT);
 
-// PWR
-	pio_configure(PIOB, PIO_OUTPUT_1, PIO_PB17, PIO_DEFAULT);
+	pio_configure(PIOB, PIO_OUTPUT_1, PWR, PIO_DEFAULT);
 
 // SDA
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA9A_TWD0, PIO_DEFAULT);
@@ -202,12 +182,9 @@ void init_hardware(void) {
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA10A_TWCK0, PIO_DEFAULT);
 
 // DAC
-// LDAC_N
-	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA30, PIO_DEFAULT);
-// CLR_N
-	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA15, PIO_DEFAULT);
-// SYNC_N
-	pio_configure(PIOA, PIO_OUTPUT_1, PIO_PA16, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, N_LDAC, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_1, N_CLR, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_OUTPUT_1, N_SYNC, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA17A_SCK0, PIO_DEFAULT);
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA18A_TXD0, PIO_DEFAULT);
 
@@ -217,7 +194,7 @@ void init_hardware(void) {
 	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA24B_SCK1, PIO_DEFAULT);
 
 // ADC_CNV
-	pio_configure(PIOA, PIO_PERIPH_B, PIO_PA31, PIO_DEFAULT);
+	pio_configure(PIOA, PIO_PERIPH_B, CNV, PIO_DEFAULT);
 
 // CHB_ADC
 	pio_configure(PIOA, PIO_PERIPH_A, PIO_PA22A_TXD2, PIO_DEFAULT);
@@ -306,9 +283,9 @@ void config_hardware() {
 	write_adm1177(0b00010101);
 	cpu_delay_us(100, F_CPU);
 	// sane simv
-	write_ad5122(0, 0x70, 0x00);
+	write_ad5122(0, 0x30, 0x40);
 	cpu_delay_us(100, F_CPU);
-	write_ad5122(1, 0x70, 0x00);
+	write_ad5122(1, 0x30, 0x40);
 	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
@@ -506,7 +483,7 @@ bool main_setup_handle(void) {
 			}
 			case 0x17: {
 				size = udd_g_ctrlreq.req.wIndex&0xFF;
-				read_adm1177(&ret_data, size);
+				read_adm1177((uint8_t*)(&ret_data), size);
 				ptr = (uint8_t*)&ret_data;
 				break;
 			}
@@ -539,7 +516,6 @@ bool main_setup_handle(void) {
 					// how much state to reset?
 					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
 					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
-
 					channel_a = true;
 					sent_out = false;
 					sent_in = false;
