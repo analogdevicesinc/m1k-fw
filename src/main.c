@@ -7,8 +7,9 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION); 
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
-uint16_t i0_dacA = 26100;
-uint16_t i0_dacB = 26100;
+
+uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40}; 
+
 uint16_t v_adc_conf = 0x20F1;
 uint16_t i_adc_conf = 0x20F7;
 uint8_t da = 0;
@@ -283,9 +284,9 @@ void config_hardware() {
 	write_adm1177(0b00010101);
 	cpu_delay_us(100, F_CPU);
 	// sane simv
-	write_ad5122(0, 0x30, 0x40);
+	write_ad5122(0, def_data[p1_simv], def_data[p2_simv]);
 	cpu_delay_us(100, F_CPU);
-	write_ad5122(1, 0x30, 0x40);
+	write_ad5122(1, def_data[p1_simv], def_data[p2_simv]);
 	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
@@ -352,7 +353,7 @@ void set_mode(uint32_t chan, chan_mode m) {
 					pio_set(PIOB, PIO_PB19); // simv
 					pio_clear(PIOB, PIO_PB2);
 					pio_set(PIOB, PIO_PB3);
-					write_ad5663(0, i0_dacA);
+					write_ad5663(0, SWAP16(def_data[i0_dac]));
 					break;
 					}
 				case SVMI: {
@@ -380,7 +381,7 @@ void set_mode(uint32_t chan, chan_mode m) {
 					pio_set(PIOB, PIO_PB20); // simv
 					pio_clear(PIOB, PIO_PB7);
 					pio_set(PIOB, PIO_PB8); // disconnect output
-					write_ad5663(1, i0_dacB);
+					write_ad5663(1, SWAP16(def_data[i0_dac]));
 					break;
 					}
 				case SVMI: {
@@ -424,8 +425,8 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
-	write_ad5663(0, i0_dacA);
-	write_ad5663(1, i0_dacB);
+	write_ad5663(0, def_data[i0_dac]);
+	write_ad5663(1, def_data[i0_dac]);
 	while (true) {
 		if ((!sending_in) & send_in) {
 			send_in = false;

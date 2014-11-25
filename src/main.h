@@ -5,8 +5,11 @@
 
 #define stringify(x)			#x
 #define xstringify(s) stringify(s)
+#define SWAP16(x)        ((((x) & 0xff00)>> 8) | (((x) & 0x00ff) << 8))
 #define A 0
 #define B 1
+
+#define cal_table_base = 0x00080000 + 256*254; 
 
 typedef enum chan_mode{
 	DISABLED = 0,
@@ -33,18 +36,18 @@ typedef struct rgb {
 	uint8_t b;
 } rgb;
 
-typedef struct ch_params {
-	uint16_t i0_dac;
-	uint16_t v0_adc;
-	uint16_t i0_adc;
-	uint8_t p1_simv;
-	uint8_t p2_simv;
-} ch_params;
-
 IN_packet packets_in[2];
 OUT_packet packets_out[2];
 
+typedef enum ch_params {
+	i0_dac = 0,
+	v0_adc = 1,
+	i0_adc = 2,
+	p1_simv = 3,
+	p2_simv = 4
+} ch_params;
 
+uint16_t cal_data[IFLASH0_PAGE_SIZE/sizeof(uint16_t)];
 
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 volatile uint32_t slot_offset;
