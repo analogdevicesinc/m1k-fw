@@ -1,6 +1,6 @@
 PRJ_PATH = asf
 ARCH = cortex-m3
-PART = sam3u1c
+PART = sam3u2c
 
 # Application target name. Given with suffix .a for library and .elf for a
 # standalone application.
@@ -120,8 +120,8 @@ CPPFLAGS = \
        -D ARM_MATH_CM3=true                               \
        -D BOARD=SAM3U_EK                                  \
        -D UDD_ENABLE                                      \
-       -D __SAM3U1C__                                     \
+       -D __SAM3U2C__                                     \
        -D printf=iprintf
 
 # Extra flags to use when linking
-LDFLAGS = \
+LDFLAGS = 

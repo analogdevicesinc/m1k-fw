@@ -48,13 +48,13 @@ SEARCH_DIR(.)
 /* Memory Spaces Definitions */
 MEMORY
 {
-	flash  (W!RX) : ORIGIN = 0x00080000, LENGTH = 0x00010000 /* Flash, 64K */
-	sram0  (W!RX) : ORIGIN = 0x20000000, LENGTH = 0x00002000 /* Sram0, 8K */
-	sram1  (W!RX) : ORIGIN = 0x20080000, LENGTH = 0x00002000 /* Sram1, 8K */
+	flash  (W!RX) : ORIGIN = 0x00080000, LENGTH = 0x00020000 /* Flash, 128K */
+	sram0  (W!RX) : ORIGIN = 0x20000000, LENGTH = 0x00004000 /* Sram0, 16K */
+	sram1  (W!RX) : ORIGIN = 0x20080000, LENGTH = 0x00004000 /* Sram1, 16K */
 /*	rom (rx)    : ORIGIN = ORIGIN(flash), LENGTH = LENGTH(flash) */ /* Flash, 64K */
 /*	ram (rwx)   : ORIGIN = ORIGIN( sram1)-LENGTH( sram0), LENGTH = LENGTH( sram0)+LENGTH( sram1) */ /* sram, 16K */
-	rom (rx)    : ORIGIN = 0x00080000, LENGTH = 0x00010000 /* Flash, 64K */
-	ram (rwx)   : ORIGIN = 0x2007E000, LENGTH = 0x00004000 /* sram, 16K */
+	rom (rx)    : ORIGIN = 0x00080000, LENGTH = 0x00020000 /* Flash, 128K */
+	ram (rwx)   : ORIGIN = 0x2007E000, LENGTH = 0x00008000 /* sram, 32K */
 }
 
 /* The stack size used by the application. NOTE: you need to adjust  */
