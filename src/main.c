@@ -101,7 +101,7 @@ void TC2_Handler(void) {
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&i_adc_conf);
 			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
-			pio_clear(PIOA, N_SYNC);
+			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
 			USART1->US_RCR = 2;
@@ -110,9 +110,9 @@ void TC2_Handler(void) {
 			USART2->US_TCR = 2;
 			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
-			pio_set(PIOA, N_SYNC);
+			PIOA->PIO_SODR = N_SYNC;
 			current_chan ^= true;
-			return;
+			break;
 		}
 		case B: {
 			USART0->US_TPR = (uint32_t)(&db);
@@ -121,7 +121,7 @@ void TC2_Handler(void) {
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&v_adc_conf);
 			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
-			pio_clear(PIOA, N_SYNC);
+			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
 			USART1->US_TCR = 2;
@@ -131,20 +131,24 @@ void TC2_Handler(void) {
 			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 			slot_offset += 1;
-			pio_set(PIOA, N_SYNC);
+			PIOA->PIO_SODR = N_SYNC;
 			current_chan ^= true;
 		}
 		default: {
-			if (slot_offset == 127) {
-				packet_index_send_out = packet_index_out^1;
-				send_out = true;
-			}
-			if (slot_offset > 255) {
-				slot_offset = 0;
-				packet_index_send_in = packet_index_in;
-				packet_index_in ^= 1;
-				packet_index_out ^= 1;
-				send_in = true;
+			switch ( slot_offset ) {
+				case 127: { 
+					packet_index_send_out = packet_index_out^1;
+					send_out = true;
+					break;
+				}
+				case 256: {
+					slot_offset = 0;
+					packet_index_send_in = packet_index_in;
+					packet_index_in ^= 1;
+					packet_index_out ^= 1;
+					send_in = true;
+					break;
+				}
 			}
 		}
 	}
@@ -532,7 +536,7 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, udd_g_ctrlreq.req.wValue);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wIndex-udd_g_ctrlreq.req.wIndex/5);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wIndex-8);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wIndex);
 				}
 				break;
