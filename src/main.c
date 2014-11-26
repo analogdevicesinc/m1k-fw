@@ -89,13 +89,12 @@ void init_build_usb_serial_number(void) {
 		serial_number[i*2] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
 	}
 }
-
 void TC2_Handler(void) {
-	uint32_t stat = tc_get_status(TC0, 2);
-	if (!sent_out)
+	uint32_t stat = tc_get_status(TC0, 2) & TC_SR_CPCS;
+	if ((!sent_out) || (stat == 0))
 		return;
-	if ((stat & TC_SR_CPCS) > 0) {
-		if (channel_a) {
+	switch (current_chan) {
+		case A: {
 			USART0->US_TPR = (uint32_t)(&da);
 			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&v_adc_conf);
@@ -112,10 +111,10 @@ void TC2_Handler(void) {
 			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 			pio_set(PIOA, N_SYNC);
-			channel_a ^= true;
+			current_chan ^= true;
 			return;
 		}
-		if (!channel_a) {
+		case B: {
 			USART0->US_TPR = (uint32_t)(&db);
 			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&i_adc_conf);
@@ -132,19 +131,21 @@ void TC2_Handler(void) {
 			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
 			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 			slot_offset += 1;
-			channel_a ^= true;
 			pio_set(PIOA, N_SYNC);
+			current_chan ^= true;
 		}
-		if (slot_offset == 127) {
-			packet_index_send_out = packet_index_out^1;
-			send_out = true;
-		}
-		if (slot_offset > 255) {
-			slot_offset = 0;
-			packet_index_send_in = packet_index_in;
-			packet_index_in ^= 1;
-			packet_index_out ^= 1;
-			send_in = true;
+		default: {
+			if (slot_offset == 127) {
+				packet_index_send_out = packet_index_out^1;
+				send_out = true;
+			}
+			if (slot_offset > 255) {
+				slot_offset = 0;
+				packet_index_send_in = packet_index_in;
+				packet_index_in ^= 1;
+				packet_index_out ^= 1;
+				send_in = true;
+			}
 		}
 	}
 }
@@ -517,7 +518,7 @@ bool main_setup_handle(void) {
 					// how much state to reset?
 					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
 					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
-					channel_a = true;
+					current_chan = A;
 					sent_out = false;
 					sent_in = false;
 					sending_in = false;

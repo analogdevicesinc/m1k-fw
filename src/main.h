@@ -61,7 +61,7 @@ volatile bool sending_in;
 volatile bool sending_out;
 volatile bool sent_in;
 volatile bool sent_out;
-volatile bool channel_a;
+volatile bool current_chan;
 volatile bool reset;
 volatile bool main_b_vendor_enable;
 
