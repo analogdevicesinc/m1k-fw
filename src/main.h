@@ -80,6 +80,7 @@ void h_to_rgb(uint8_t , rgb * c);
 void main_resume_action(void);
 
 bool main_setup_handle(void);
+bool msft_string_handle(void);
 
 void init_build_usb_serial_number(void);
 

@@ -471,6 +471,15 @@ void main_vendor_disable(void) {
 	main_b_vendor_enable = false;
 }
 
+bool msft_string_handle(void) {
+	uint8_t udi_msft_magic[] = "M\x00S\x00F\x00T\x001\x000\x000\x00\xee\x00";
+	if ((udd_g_ctrlreq.req.wValue & 0xff) == 0xEE) {
+		udd_g_ctrlreq.payload = (uint8_t *) &udi_msft_magic;
+		udd_g_ctrlreq.payload_size = 18;
+		return true;
+	}
+	return false;
+}
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
 	uint16_t size = 0;

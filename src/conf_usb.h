@@ -13,7 +13,6 @@
 
 #define  USB_DEVICE_MANUFACTURE_NAME      "Analog Devices, Inc."
 #define  USB_DEVICE_PRODUCT_NAME          "M1000"
-#define  USB_DEVICE_SERIAL_NAME
 #define  USB_DEVICE_GET_SERIAL_NAME_POINTER serial_number
 #define  USB_DEVICE_GET_SERIAL_NAME_LENGTH  33
 extern uint8_t serial_number[];
@@ -27,6 +26,8 @@ extern uint8_t serial_number[];
 
 #define UDI_VENDOR_ENABLE_EXT()           main_vendor_enable()
 #define UDI_VENDOR_DISABLE_EXT()          main_vendor_disable()
+
+#define UDC_GET_EXTRA_STRING()            msft_string_handle()
 
 // why would you want to handle interface control requests?
 #define UDI_VENDOR_SETUP_OUT_RECEIVED()   false
