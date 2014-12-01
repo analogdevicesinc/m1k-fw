@@ -90,8 +90,9 @@ void init_build_usb_serial_number(void) {
 	}
 }
 void TC2_Handler(void) {
-	uint32_t stat = tc_get_status(TC0, 2) & TC_SR_CPCS;
-	if ((!sent_out) || (stat == 0))
+	// clear status register
+	(TcChannel *)((TC0)->TC_CHANNEL+2)->TC_SR;
+	if ((!sent_out))
 		return;
 	switch (current_chan) {
 		case A: {
@@ -251,7 +252,8 @@ void init_hardware(void) {
 // RB takes CNV L->H
 // RC takes CNV H->L, LDAC L->H
 	tc_init(TC0, 2, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
-	tc_enable_interrupt(TC0, 2, TC_IER_CPAS | TC_IER_CPCS);
+// CPAS doesn't matter, CPCS is triggered post-conversion
+	tc_enable_interrupt(TC0, 2, TC_IER_CPCS);
 	NVIC_EnableIRQ(TC2_IRQn);
 
 
