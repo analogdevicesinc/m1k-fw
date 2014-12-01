@@ -3,7 +3,6 @@
 
 #include "compiler.h"
 
-
 #define  USB_DEVICE_VENDOR_ID             0x0456
 #define  USB_DEVICE_PRODUCT_ID            0xCEE2
 #define  USB_DEVICE_MAJOR_VERSION         1
@@ -42,6 +41,8 @@ extern uint8_t serial_number[];
 #define UDI_VENDOR_EPS_SIZE_INT_HS    0
 #define UDI_VENDOR_EPS_SIZE_BULK_HS  512
 #define UDI_VENDOR_EPS_SIZE_ISO_HS    0
+
+#define USB_VERSION USB_V2
 
 #include <udi_vendor_conf.h>
 #include "main.h"
