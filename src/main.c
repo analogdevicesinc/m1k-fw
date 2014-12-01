@@ -472,14 +472,45 @@ void main_vendor_disable(void) {
 }
 
 bool msft_string_handle(void) {
-	uint8_t udi_msft_magic[] = "M\x00S\x00F\x00T\x001\x000\x000\x00\xee\x00";
+	uint8_t udi_msft_magic[] = "MSFT100\xee";
+
+	struct extra_strings_desc_t{
+		usb_str_desc_t header;
+		le16_t string[sizeof(udi_msft_magic)];
+	};
+
+	static UDC_DESC_STORAGE struct extra_strings_desc_t extra_strings_desc = {
+		.header.bDescriptorType = USB_DT_STRING
+	};
+
+	uint8_t i;
+	uint8_t *str;
+	uint8_t str_lgt=0;
+
 	if ((udd_g_ctrlreq.req.wValue & 0xff) == 0xEE) {
-		udd_g_ctrlreq.payload = (uint8_t *) &udi_msft_magic;
-		udd_g_ctrlreq.payload_size = 18;
-		return true;
+		str_lgt = sizeof(udi_msft_magic)-1;
+		str = udi_msft_magic;
 	}
-	return false;
+	else {
+		return false;
+	}
+
+	if (str_lgt!=0) {
+		for( i=0; i<str_lgt; i++) {
+			extra_strings_desc.string[i] = cpu_to_le16((le16_t)str[i]);
+		}
+		extra_strings_desc.header.bLength = 2+ (str_lgt)*2;
+		udd_g_ctrlreq.payload_size = extra_strings_desc.header.bLength;
+		udd_g_ctrlreq.payload = (uint8_t *) &extra_strings_desc;
+	}
+
+	// if the string is larger than request length, then cut it
+	if (udd_g_ctrlreq.payload_size > udd_g_ctrlreq.req.wLength) {
+		udd_g_ctrlreq.payload_size = udd_g_ctrlreq.req.wLength;
+	}
+	return true;
 }
+
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
 	uint16_t size = 0;

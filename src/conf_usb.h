@@ -13,6 +13,7 @@
 
 #define  USB_DEVICE_MANUFACTURE_NAME      "Analog Devices, Inc."
 #define  USB_DEVICE_PRODUCT_NAME          "M1000"
+#define  USB_DEVICE_SERIAL_NAME
 #define  USB_DEVICE_GET_SERIAL_NAME_POINTER serial_number
 #define  USB_DEVICE_GET_SERIAL_NAME_LENGTH  33
 extern uint8_t serial_number[];
@@ -43,6 +44,8 @@ extern uint8_t serial_number[];
 #define UDI_VENDOR_EPS_SIZE_INT_HS    0
 #define UDI_VENDOR_EPS_SIZE_BULK_HS  512
 #define UDI_VENDOR_EPS_SIZE_ISO_HS    0
+
+#define USB_VERSION USB_V2
 
 #include <udi_vendor_conf.h>
 #include "main.h"
