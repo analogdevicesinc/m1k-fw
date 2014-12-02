@@ -3,12 +3,12 @@
 #include "conf_usb.h"
 #include "conf_board.h"
 
-const char hwversion[] = xstringify(HW_VERSION); 
-const char fwversion[] = xstringify(FW_VERSION); 
+const char hwversion[] = xstringify(HW_VERSION);
+const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
 
-uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40}; 
+uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
 
 uint16_t v_adc_conf = 0x20F1;
 uint16_t i_adc_conf = 0x20F7;
@@ -53,11 +53,11 @@ static twi_options_t TWIM_CONFIG =
  * Assumes maximum Saturation & maximum Value (brightness)
  * Performs purely integer math, no floating point.
  */
-void h_to_rgb(uint8_t h, rgb* c) 
+void h_to_rgb(uint8_t h, rgb* c)
 {
 	uint8_t hd = h / 42;   // 42 == 252/6,  252 == H_MAX
 	uint8_t hi = hd % 6;   // gives 0-5
-	uint8_t f = h % 42; 
+	uint8_t f = h % 42;
 	uint8_t fs = f * 6;
 	switch( hi ) {
 		case 0:
@@ -137,7 +137,7 @@ void TC2_Handler(void) {
 		}
 		default: {
 			switch ( slot_offset ) {
-				case 127: { 
+				case 127: {
 					packet_index_send_out = packet_index_out^1;
 					send_out = true;
 					break;
@@ -301,7 +301,7 @@ void config_hardware() {
 
 void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
-	
+
 	uint8_t v;
 	if (ch == A) {
 		p.chip = 0x2f;
@@ -472,7 +472,7 @@ void main_vendor_disable(void) {
 }
 
 bool msft_string_handle(void) {
-	uint8_t udi_msft_magic[] = "MSFT100\xee";
+	uint8_t udi_msft_magic[] = "MSFT1000";
 
 	struct extra_strings_desc_t{
 		usb_str_desc_t header;
@@ -510,6 +510,22 @@ bool msft_string_handle(void) {
 	}
 	return true;
 }
+static USB_MicrosoftCompatibleDescriptor msft_compatible = {
+	.dwLength = sizeof(USB_MicrosoftCompatibleDescriptor) + 1*sizeof(USB_MicrosoftCompatibleDescriptor_Interface),
+   	.bcdVersion = 0x0100,
+   	.wIndex = 0x0004,
+   	.bCount = 1,
+   	.reserved = {0, 0, 0, 0, 0, 0, 0},
+   	.interfaces = {
+   			{
+   			.bFirstInterfaceNumber = 0,
+   			.reserved1 = 0,
+   			.compatibleID = "WINUSB\0\0",
+   			.subCompatibleID = {0, 0, 0, 0, 0, 0, 0, 0},
+   			.reserved2 = {0, 0, 0, 0, 0, 0},
+   			},
+		}
+	};
 
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
@@ -557,7 +573,7 @@ bool main_setup_handle(void) {
 				break;
 			}
 			case 0xC5: {
-				if (udd_g_ctrlreq.req.wValue < 1) { 
+				if (udd_g_ctrlreq.req.wValue < 1) {
 					tc_stop(TC0, 2);
 				}
 				else {
@@ -580,6 +596,19 @@ bool main_setup_handle(void) {
 					tc_write_ra(TC0, 2, udd_g_ctrlreq.req.wValue);
 					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wIndex-8);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wIndex);
+				}
+				break;
+			}
+			case 0x30: {
+				if (udd_g_ctrlreq.req.wIndex == 0x04) {
+					ptr = &msft_compatible;
+					size = (udd_g_ctrlreq.req.wLength);
+					if (size > msft_compatible.dwLength) {
+						size = msft_compatible.dwLength;
+					}
+				}
+				else {
+					return false;
 				}
 				break;
 			}

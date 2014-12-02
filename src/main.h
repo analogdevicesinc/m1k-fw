@@ -65,7 +65,7 @@ volatile bool current_chan;
 volatile bool reset;
 volatile bool main_b_vendor_enable;
 
-uint8_t ret_data[16];
+uint8_t ret_data[64];
 
 bool main_vendor_enable(void);
 
