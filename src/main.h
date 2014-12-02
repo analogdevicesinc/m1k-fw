@@ -65,7 +65,7 @@ volatile bool current_chan;
 volatile bool reset;
 volatile bool main_b_vendor_enable;
 
-uint8_t ret_data[16];
+uint8_t ret_data[64];
 
 bool main_vendor_enable(void);
 
@@ -80,6 +80,7 @@ void h_to_rgb(uint8_t , rgb * c);
 void main_resume_action(void);
 
 bool main_setup_handle(void);
+bool msft_string_handle(void);
 
 void init_build_usb_serial_number(void);
 

@@ -27,6 +27,8 @@ extern uint8_t serial_number[];
 #define UDI_VENDOR_ENABLE_EXT()           main_vendor_enable()
 #define UDI_VENDOR_DISABLE_EXT()          main_vendor_disable()
 
+#define UDC_GET_EXTRA_STRING()            msft_string_handle()
+
 // why would you want to handle interface control requests?
 #define UDI_VENDOR_SETUP_OUT_RECEIVED()   false
 #define UDI_VENDOR_SETUP_IN_RECEIVED()    false
@@ -43,6 +45,24 @@ extern uint8_t serial_number[];
 #define UDI_VENDOR_EPS_SIZE_ISO_HS    0
 
 #define USB_VERSION USB_V2
+
+/// Microsoft WCID descriptor
+typedef struct USB_MicrosoftCompatibleDescriptor_Interface {
+    uint8_t bFirstInterfaceNumber;
+    uint8_t reserved1;
+    uint8_t compatibleID[8];
+    uint8_t subCompatibleID[8];
+    uint8_t reserved2[6];
+} __attribute__((packed)) USB_MicrosoftCompatibleDescriptor_Interface;
+
+typedef struct USB_MicrosoftCompatibleDescriptor {
+    uint32_t dwLength;
+    uint16_t bcdVersion;
+    uint16_t wIndex;
+    uint8_t bCount;
+    uint8_t reserved[7];
+    USB_MicrosoftCompatibleDescriptor_Interface interfaces[];
+} __attribute__((packed)) USB_MicrosoftCompatibleDescriptor;
 
 #include <udi_vendor_conf.h>
 #include "main.h"

@@ -105,7 +105,7 @@ ARFLAGS =
 ASFLAGS =
 
 # Extra flags to use when compiling.
-CFLAGS = -fstack-usage
+CFLAGS = -fstack-usage -Wno-attributes
 
 # Extra flags to use when preprocessing.
 #
