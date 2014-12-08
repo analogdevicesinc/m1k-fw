@@ -601,7 +601,7 @@ bool main_setup_handle(void) {
 			}
 			case 0x30: {
 				if (udd_g_ctrlreq.req.wIndex == 0x04) {
-					ptr = &msft_compatible;
+					ptr = (uint8_t*)&msft_compatible;
 					size = (udd_g_ctrlreq.req.wLength);
 					if (size > msft_compatible.dwLength) {
 						size = msft_compatible.dwLength;
