@@ -290,11 +290,6 @@ void config_hardware() {
 	// continuous V&I conversion
 	write_adm1177(0b00010101);
 	cpu_delay_us(100, F_CPU);
-	// sane simv
-	write_ad5122(0, def_data[p1_simv], def_data[p2_simv]);
-	cpu_delay_us(100, F_CPU);
-	write_ad5122(1, def_data[p1_simv], def_data[p2_simv]);
-	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
 }
@@ -434,6 +429,13 @@ int main(void)
 	udc_attach();
 	write_ad5663(0, def_data[i0_dac]);
 	write_ad5663(1, def_data[i0_dac]);
+	// set pots for a sensible default
+	cpu_delay_us(100, F_CPU);
+	write_ad5122(0, def_data[p1_simv], def_data[p2_simv]);
+	cpu_delay_us(100, F_CPU);
+	write_ad5122(1, def_data[p1_simv], def_data[p2_simv]);
+	cpu_delay_us(100, F_CPU);
+
 	while (true) {
 		if ((!sending_in) & send_in) {
 			send_in = false;
@@ -559,8 +561,17 @@ bool main_setup_handle(void) {
 				pio_set_pin_high(udd_g_ctrlreq.req.wValue&0xFF);
 				break;
 			}
+			case 0x90: {
+				ret_data[0] = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
+				size = 1;
+				break;
+			}
 			case 0x53: {
 				set_mode(udd_g_ctrlreq.req.wValue&0xF, udd_g_ctrlreq.req.wIndex&0xF);
+				break;
+			}
+			case 0x59: {
+				write_ad5122((udd_g_ctrlreq.req.wValue&0xF), (udd_g_ctrlreq.req.wIndex&0xFF00)>>8, (udd_g_ctrlreq.req.wIndex&0xFF));
 				break;
 			}
 			case 0xBB: {
