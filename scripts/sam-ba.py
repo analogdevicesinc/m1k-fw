@@ -51,7 +51,7 @@ page = 0
 for pos in xrange(0,fw.length/8,4):
 	fw.bytepos = pos
 	addr = hex(flashBase+pos).lstrip("0x").rstrip("L").zfill(8)
-	data = hex(fw.peek("<L")).lstrip("0x").zfill(8)
+	data = hex(fw.peek("<L")).lstrip("0x").rstrip("L").zfill(8)
 	cmd = ("W"+addr+","+data+"#").upper()
 	try:
 		putStr(cmd)
