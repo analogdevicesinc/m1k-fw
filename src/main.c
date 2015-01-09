@@ -14,7 +14,7 @@ uint16_t v_adc_conf = 0x20F1;
 uint16_t i_adc_conf = 0x20F7;
 uint8_t da = 0;
 uint8_t db = 1;
-
+uint32_t frame_number = 0;
 pwm_channel_t PWM_CH;
 
 static pwm_clock_t PWM_SETTINGS = {
@@ -585,6 +585,14 @@ bool main_setup_handle(void) {
 			}
 			case 0xCC: {
 				config_hardware();
+				break;
+			}
+			case 0x6F: {
+				frame_number = UDPHS->UDPHS_FNUM;
+				ret_data[1] = frame_number&0xFF;
+				ret_data[0] = frame_number>>8;
+				ptr = &ret_data;
+				size = 2;
 				break;
 			}
 			case 0xC5: {
