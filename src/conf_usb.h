@@ -11,7 +11,7 @@
 #define  USB_DEVICE_ATTR                  (USB_CONFIG_ATTR_BUS_POWERED)
 
 #define  USB_DEVICE_MANUFACTURE_NAME      "Analog Devices, Inc."
-#define  USB_DEVICE_PRODUCT_NAME          "M1000"
+#define  USB_DEVICE_PRODUCT_NAME          "ADALM1000"
 #define  USB_DEVICE_SERIAL_NAME
 #define  USB_DEVICE_GET_SERIAL_NAME_POINTER serial_number
 #define  USB_DEVICE_GET_SERIAL_NAME_LENGTH  33
