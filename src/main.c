@@ -459,6 +459,10 @@ void main_suspend_action(void) { }
 void main_resume_action(void) { }
 
 void main_sof_action(void) {
+	if (start_timer) {
+		tc_start(TC0, 2);
+		start_timer = false;
+	}
 	if (!main_b_vendor_enable)
 		return;
 }
@@ -658,7 +662,7 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	}
 	else {
 		if (sent_out == false) {
-			tc_start(TC0, 2);
+			start_timer = true;
 		}
 		sent_out = true;
 		sending_out = false;

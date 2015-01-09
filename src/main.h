@@ -64,6 +64,7 @@ volatile bool sent_out;
 volatile bool current_chan;
 volatile bool reset;
 volatile bool main_b_vendor_enable;
+volatile bool start_timer;
 
 uint8_t ret_data[64];
 
