@@ -55,6 +55,7 @@ volatile uint32_t packet_index_in;
 volatile uint32_t packet_index_out;
 volatile uint32_t packet_index_send_in;
 volatile uint32_t packet_index_send_out;
+volatile uint16_t start_frame;
 volatile bool send_in;
 volatile bool send_out;
 volatile bool sending_in;
@@ -64,6 +65,7 @@ volatile bool sent_out;
 volatile bool current_chan;
 volatile bool reset;
 volatile bool main_b_vendor_enable;
+volatile bool start_timer;
 
 uint8_t ret_data[64];
 

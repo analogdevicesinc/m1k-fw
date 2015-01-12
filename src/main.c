@@ -14,7 +14,7 @@ uint16_t v_adc_conf = 0x20F1;
 uint16_t i_adc_conf = 0x20F7;
 uint8_t da = 0;
 uint8_t db = 1;
-
+uint32_t frame_number = 0;
 pwm_channel_t PWM_CH;
 
 static pwm_clock_t PWM_SETTINGS = {
@@ -459,6 +459,11 @@ void main_suspend_action(void) { }
 void main_resume_action(void) { }
 
 void main_sof_action(void) {
+	frame_number = UDPHS->UDPHS_FNUM;
+	if (start_timer & (frame_number == start_frame)){
+		tc_start(TC0, 2);
+		start_timer = false;
+	}
 	if (!main_b_vendor_enable)
 		return;
 }
@@ -583,6 +588,13 @@ bool main_setup_handle(void) {
 				config_hardware();
 				break;
 			}
+			case 0x6F: {
+				ret_data[0] = frame_number&0xFF;
+				ret_data[1] = frame_number>>8;
+				ptr = &ret_data;
+				size = 2;
+				break;
+			}
 			case 0xC5: {
 				if (udd_g_ctrlreq.req.wValue < 1) {
 					tc_stop(TC0, 2);
@@ -604,9 +616,10 @@ bool main_setup_handle(void) {
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
 					// so much
-					tc_write_ra(TC0, 2, udd_g_ctrlreq.req.wValue);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wIndex-8);
-					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wIndex);
+					tc_write_ra(TC0, 2, 1);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-8);
+					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
+					start_frame = udd_g_ctrlreq.req.wIndex;
 				}
 				break;
 			}
@@ -658,7 +671,7 @@ void main_vendor_bulk_out_received(udd_ep_status_t status,
 	}
 	else {
 		if (sent_out == false) {
-			tc_start(TC0, 2);
+			start_timer = true;
 		}
 		sent_out = true;
 		sending_out = false;
