@@ -55,6 +55,7 @@ volatile uint32_t packet_index_in;
 volatile uint32_t packet_index_out;
 volatile uint32_t packet_index_send_in;
 volatile uint32_t packet_index_send_out;
+volatile uint16_t start_frame;
 volatile bool send_in;
 volatile bool send_out;
 volatile bool sending_in;
