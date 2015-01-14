@@ -460,7 +460,7 @@ void main_resume_action(void) { }
 
 void main_sof_action(void) {
 	frame_number = UDPHS->UDPHS_FNUM;
-	if (start_timer & (frame_number == start_frame)){
+	if (start_timer & ((frame_number == start_frame)|(start_frame == 0))){
 		tc_start(TC0, 2);
 		start_timer = false;
 	}
