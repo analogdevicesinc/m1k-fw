@@ -3,8 +3,8 @@
 
 #include "compiler.h"
 
-#define  USB_DEVICE_VENDOR_ID             0x0456
-#define  USB_DEVICE_PRODUCT_ID            0xCEE2
+#define  USB_DEVICE_VENDOR_ID             0x064B
+#define  USB_DEVICE_PRODUCT_ID            0x784C
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
 #define  USB_DEVICE_POWER                 500 // Consumption on Vbus line (mA)
