@@ -92,10 +92,26 @@ void init_build_usb_serial_number(void) {
 void TC2_Handler(void) {
 	// clear status register
 	(TcChannel *)((TC0)->TC_CHANNEL+2)->TC_SR;
+	PIOA->PIO_SODR = N_SYNC;
 	if ((!sent_out))
 		return;
 	switch (current_chan) {
 		case A: {
+			switch ( slot_offset ) {
+				case 127: {
+					packet_index_send_out = packet_index_out^1;
+					send_out = true;
+					break;
+				}
+				case 256: {
+					slot_offset = 0;
+					packet_index_send_in = packet_index_in;
+					packet_index_in ^= 1;
+					packet_index_out ^= 1;
+					send_in = true;
+					break;
+				}
+			}
 			USART0->US_TPR = (uint32_t)(&da);
 			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&v_adc_conf);
@@ -109,9 +125,6 @@ void TC2_Handler(void) {
 			USART1->US_TCR = 2;
 			USART2->US_RCR = 2;
 			USART2->US_TCR = 2;
-			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
-			PIOA->PIO_SODR = N_SYNC;
 			current_chan ^= true;
 			break;
 		}
@@ -129,28 +142,8 @@ void TC2_Handler(void) {
 			USART1->US_RCR = 2;
 			USART2->US_TCR = 2;
 			USART2->US_RCR = 2;
-			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
-			while(!((USART0->US_CSR&US_CSR_TXEMPTY) > 0));
 			slot_offset += 1;
-			PIOA->PIO_SODR = N_SYNC;
 			current_chan ^= true;
-		}
-		default: {
-			switch ( slot_offset ) {
-				case 127: {
-					packet_index_send_out = packet_index_out^1;
-					send_out = true;
-					break;
-				}
-				case 256: {
-					slot_offset = 0;
-					packet_index_send_in = packet_index_in;
-					packet_index_in ^= 1;
-					packet_index_out ^= 1;
-					send_in = true;
-					break;
-				}
-			}
 		}
 	}
 }
