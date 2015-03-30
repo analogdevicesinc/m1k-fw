@@ -27,7 +27,7 @@ static  usart_spi_opt_t USART_SPI_ADC =
 {
 	.baudrate	 = 24000000,
 	.char_length   = US_MR_CHRL_8_BIT,
-	.spi_mode	  = SPI_MODE_0,
+	.spi_mode	  = SPI_MODE_3,
 	.channel_mode  = US_MR_CHMODE_NORMAL | US_MR_INACK
 };
 
@@ -239,11 +239,11 @@ void init_hardware(void) {
 	twi_master_init(TWI0, &TWIM_CONFIG);
 
 
-// CLOCK3 = MCLK/32
+// CLOCK1 = MCLK/2
 // RA takes LDAC H->L
 // RB takes CNV L->H
 // RC takes CNV H->L, LDAC L->H
-	tc_init(TC0, 2, TC_CMR_TCCLKS_TIMER_CLOCK3 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
+	tc_init(TC0, 2, TC_CMR_TCCLKS_TIMER_CLOCK1 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
 // CPAS doesn't matter, CPCS is triggered post-conversion
 	tc_enable_interrupt(TC0, 2, TC_IER_CPCS);
 	NVIC_EnableIRQ(TC2_IRQn);
@@ -608,9 +608,9 @@ bool main_setup_handle(void) {
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
 					// so much
-					tc_write_ra(TC0, 2, 1);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-8);
-					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
+					tc_write_ra(TC0, 2, 10);
+					tc_write_rb(TC0, 2, 230);
+					tc_write_rc(TC0, 2, 240);	// 5 us
 					start_frame = udd_g_ctrlreq.req.wIndex;
 				}
 				break;
