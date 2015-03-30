@@ -91,13 +91,13 @@ void init_build_usb_serial_number(void) {
 }
 void TC2_Handler(void) {
 	// clear status register
-	(TcChannel *)((TC0)->TC_CHANNEL+2)->TC_SR;
+	((TC0)->TC_CHANNEL+2)->TC_SR;
 	PIOA->PIO_SODR = N_SYNC;
 	if ((!sent_out))
 		return;
 	switch (current_chan) {
 		case A: {
-			switch ( slot_offset ) {
+			switch (slot_offset) {
 				case 127: {
 					packet_index_send_out = packet_index_out^1;
 					send_out = true;
@@ -109,7 +109,6 @@ void TC2_Handler(void) {
 					packet_index_in ^= 1;
 					packet_index_out ^= 1;
 					send_in = true;
-					break;
 				}
 			}
 			USART0->US_TPR = (uint32_t)(&da);
@@ -442,7 +441,7 @@ int main(void)
 		}
 		if (!reset)
 			wdt_restart(WDT);
-		if (reset)
+		else
 			udc_detach();
 	}
 }
@@ -584,7 +583,7 @@ bool main_setup_handle(void) {
 			case 0x6F: {
 				ret_data[0] = frame_number&0xFF;
 				ret_data[1] = frame_number>>8;
-				ptr = &ret_data;
+				ptr = (uint8_t*)&ret_data;
 				size = 2;
 				break;
 			}
