@@ -8,10 +8,13 @@ const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
 
+// default values for DAC, pots
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
 
+// reversed endianness from AD7682 datasheet
 uint16_t v_adc_conf = 0x20F1;
 uint16_t i_adc_conf = 0x20F7;
+
 uint8_t da = 0;
 uint8_t db = 1;
 uint32_t frame_number = 0;
@@ -609,8 +612,8 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, 10);
-					tc_write_rb(TC0, 2, 230);
-					tc_write_rc(TC0, 2, 240);	// 5 us
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-10);
+					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
 					start_frame = udd_g_ctrlreq.req.wIndex;
 				}
 				break;
