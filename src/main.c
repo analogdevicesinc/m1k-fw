@@ -150,6 +150,7 @@ void TC2_Handler(void) {
 	}
 }
 
+/// initialise SAM subsystems for M1K operation
 void init_hardware(void) {
 // enable peripheral clock access
 	pmc_enable_periph_clk(ID_PIOA);
@@ -281,6 +282,7 @@ void init_hardware(void) {
 
 }
 
+/// post-setup, write necessary configurations to hotswap and DAC
 void config_hardware() {
 	// continuous V&I conversion
 	write_adm1177(0b00010101);
@@ -289,6 +291,7 @@ void config_hardware() {
 	write_ad5663(0xFF, 0xFFFF);
 }
 
+/// write resistance values to digipots
 void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 	twi_packet_t p;
 
@@ -310,6 +313,7 @@ void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 	twi_master_write(TWI0, &p);
 }
 
+/// write controller register
 void write_adm1177(uint8_t v) {
 	twi_packet_t p;
 	p.chip = 0x58; // 7b addr of '1177 w/ addr p grounded
@@ -320,6 +324,7 @@ void write_adm1177(uint8_t v) {
 
 }
 
+/// read controller register
 void read_adm1177(uint8_t* b, uint8_t ct) {
 	twi_packet_t p;
 	p.chip = 0x58;
@@ -329,6 +334,7 @@ void read_adm1177(uint8_t* b, uint8_t ct) {
 	twi_master_read(TWI0, &p);
 }
 
+/// synchronous write to DAC
 void write_ad5663(uint8_t conf, uint16_t data) {
 	USART0->US_TPR = (uint32_t)(&conf);
 	USART0->US_TNPR = (uint32_t)(&data);
@@ -341,6 +347,7 @@ void write_ad5663(uint8_t conf, uint16_t data) {
 	pio_set(PIOA, N_SYNC);
 }
 
+/// configure device channel modes
 void set_mode(uint32_t chan, chan_mode m) {
 	switch (chan) {
 		case A: {
@@ -473,6 +480,8 @@ void main_vendor_disable(void) {
 	main_b_vendor_enable = false;
 }
 
+
+/// WCID configuration information
 bool msft_string_handle(void) {
 	uint8_t udi_msft_magic[] = "MSFT1000";
 
@@ -529,6 +538,7 @@ static USB_MicrosoftCompatibleDescriptor msft_compatible = {
 		}
 	};
 
+/// handle control transfers
 bool main_setup_handle(void) {
 	uint8_t* ptr = 0;
 	uint16_t size = 0;
@@ -547,42 +557,51 @@ bool main_setup_handle(void) {
 				}
 				break;
 			}
+			/// read ADM1177
 			case 0x17: {
 				size = udd_g_ctrlreq.req.wIndex&0xFF;
 				read_adm1177((uint8_t*)(&ret_data), size);
 				ptr = (uint8_t*)&ret_data;
 				break;
 			}
+			/// Set pin 0
 			case 0x50: {
 				pio_set_pin_low(udd_g_ctrlreq.req.wValue&0xFF);
 				break;
 			}
+			/// Set pin 1
 			case 0x51: {
 				pio_set_pin_high(udd_g_ctrlreq.req.wValue&0xFF);
 				break;
 			}
+			/// get pin value
 			case 0x90: {
 				ret_data[0] = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
 				size = 1;
 				break;
 			}
+			/// set channel mode - wValue = channel, wIndex = value
 			case 0x53: {
 				set_mode(udd_g_ctrlreq.req.wValue&0xF, udd_g_ctrlreq.req.wIndex&0xF);
 				break;
 			}
+			/// set potentiometer - wValue = channel, wIndex = values (0xAABB)
 			case 0x59: {
 				write_ad5122((udd_g_ctrlreq.req.wValue&0xF), (udd_g_ctrlreq.req.wIndex&0xFF00)>>8, (udd_g_ctrlreq.req.wIndex&0xFF));
 				break;
 			}
+			/// erase and reset to bootloader
 			case 0xBB: {
 				flash_clear_gpnvm(1);
 				reset = true;
 				break;
 			}
+			/// setup hardware
 			case 0xCC: {
 				config_hardware();
 				break;
 			}
+			/// get USB microframe
 			case 0x6F: {
 				ret_data[0] = frame_number&0xFF;
 				ret_data[1] = frame_number>>8;
@@ -590,6 +609,7 @@ bool main_setup_handle(void) {
 				size = 2;
 				break;
 			}
+			/// configure sampling
 			case 0xC5: {
 				if (udd_g_ctrlreq.req.wValue < 1) {
 					tc_stop(TC0, 2);
@@ -618,6 +638,7 @@ bool main_setup_handle(void) {
 				}
 				break;
 			}
+			/// windows compatible ID handling for autoinstall
 			case 0x30: {
 				if (udd_g_ctrlreq.req.wIndex == 0x04) {
 					ptr = (uint8_t*)&msft_compatible;
