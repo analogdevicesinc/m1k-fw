@@ -7,6 +7,7 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
+static int interleave_data;
 
 // default values for DAC, pots
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
@@ -92,6 +93,7 @@ void init_build_usb_serial_number(void) {
 		serial_number[i*2] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
 	}
 }
+
 void TC2_Handler(void) {
 	// clear status register
 	((TC0)->TC_CHANNEL+2)->TC_SR;
@@ -115,11 +117,20 @@ void TC2_Handler(void) {
 				}
 			}
 			USART0->US_TPR = (uint32_t)(&da);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
+			if (interleave_data)
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+0]);
+			else
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&v_adc_conf);
-			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
+			if (interleave_data)
+				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+0]);
+			else
+				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&i_adc_conf);
-			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
+			if (interleave_data)
+				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+1]);
+			else
+				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
@@ -132,11 +143,20 @@ void TC2_Handler(void) {
 		}
 		case B: {
 			USART0->US_TPR = (uint32_t)(&db);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
+			if (interleave_data)
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+1]);
+			else
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
 			USART1->US_TPR = (uint32_t)(&i_adc_conf);
-			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
+			if (interleave_data)
+				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+3]);
+			else
+				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
 			USART2->US_TPR = (uint32_t)(&v_adc_conf);
-			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
+			if (interleave_data)
+				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+2]);
+			else
+				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
@@ -599,6 +619,11 @@ bool main_setup_handle(void) {
 			/// setup hardware
 			case 0xCC: {
 				config_hardware();
+				break;
+			}
+			/// Change interleave mode
+			case 0xDD: {
+				interleave_data = udd_g_ctrlreq.req.wValue & 1;
 				break;
 			}
 			/// get USB microframe

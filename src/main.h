@@ -18,16 +18,22 @@ typedef enum chan_mode{
 } chan_mode;
 
 
-typedef struct IN_packet {
-	uint16_t data_a_v[256];
-	uint16_t data_a_i[256];
-	uint16_t data_b_v[256];
-	uint16_t data_b_i[256];
+typedef union IN_packet {
+	struct {
+		uint16_t data_a_v[256];
+		uint16_t data_a_i[256];
+		uint16_t data_b_v[256];
+		uint16_t data_b_i[256];
+	};
+	uint16_t data[1024];
 } IN_packet;
 
-typedef struct OUT_packet{
-	uint16_t data_a[256];
-	uint16_t data_b[256];
+typedef union OUT_packet {
+	struct {
+		uint16_t data_a[256];
+		uint16_t data_b[256];
+	};
+	uint16_t data[512];
 } OUT_packet;
 
 typedef struct rgb {
