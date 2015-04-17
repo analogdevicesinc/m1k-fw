@@ -117,20 +117,19 @@ void TC2_Handler(void) {
 				}
 			}
 			USART0->US_TPR = (uint32_t)(&da);
-			if (interleave_data)
+			if (unlikely(interleave_data)) {
 				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+0]);
-			else
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
-			USART1->US_TPR = (uint32_t)(&v_adc_conf);
-			if (interleave_data)
+				USART1->US_TPR = (uint32_t)(&v_adc_conf);
 				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+0]);
-			else
-				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
-			USART2->US_TPR = (uint32_t)(&i_adc_conf);
-			if (interleave_data)
+				USART2->US_TPR = (uint32_t)(&i_adc_conf);
 				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+1]);
-			else
+			} else {
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
+				USART1->US_TPR = (uint32_t)(&v_adc_conf);
+				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
+				USART2->US_TPR = (uint32_t)(&i_adc_conf);
 				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
+			}
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
@@ -143,20 +142,19 @@ void TC2_Handler(void) {
 		}
 		case B: {
 			USART0->US_TPR = (uint32_t)(&db);
-			if (interleave_data)
+			if (unlikely(interleave_data)) {
 				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+1]);
-			else
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
-			USART1->US_TPR = (uint32_t)(&i_adc_conf);
-			if (interleave_data)
+				USART1->US_TPR = (uint32_t)(&i_adc_conf);
 				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+3]);
-			else
-				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
-			USART2->US_TPR = (uint32_t)(&v_adc_conf);
-			if (interleave_data)
+				USART2->US_TPR = (uint32_t)(&v_adc_conf);
 				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+2]);
-			else
+			} else {
+				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
+				USART1->US_TPR = (uint32_t)(&i_adc_conf);
+				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
+				USART2->US_TPR = (uint32_t)(&v_adc_conf);
 				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
+			}
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;

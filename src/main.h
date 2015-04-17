@@ -11,6 +11,14 @@
 
 #define cal_table_base = 0x00080000 + 256*254; 
 
+#ifdef __GNUC__
+#   define likely(x)       __builtin_expect((x),1)
+#   define unlikely(x)     __builtin_expect((x),0)
+#else
+#   define likely(x)       (x)
+#   define unlikely(x)     (x)
+#endif
+
 typedef enum chan_mode{
 	DISABLED = 0,
 	SVMI = 1,
@@ -56,9 +64,9 @@ typedef enum ch_params {
 uint16_t cal_data[IFLASH0_PAGE_SIZE/sizeof(uint16_t)];
 
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
-volatile uint32_t slot_offset;
-volatile uint32_t packet_index_in;
-volatile uint32_t packet_index_out;
+uint32_t slot_offset;
+uint32_t packet_index_in;
+uint32_t packet_index_out;
 volatile uint32_t packet_index_send_in;
 volatile uint32_t packet_index_send_out;
 volatile uint16_t start_frame;
@@ -68,10 +76,10 @@ volatile bool sending_in;
 volatile bool sending_out;
 volatile bool sent_in;
 volatile bool sent_out;
-volatile bool current_chan;
+bool current_chan;
 volatile bool reset;
-volatile bool main_b_vendor_enable;
-volatile bool start_timer;
+bool main_b_vendor_enable;
+bool start_timer;
 
 uint8_t ret_data[64];
 
