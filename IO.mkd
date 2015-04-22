@@ -1,17 +1,49 @@
-|IO Name|Net Name|Net Description|
-|-------|--------|---------------|
-|PA0|PIO0|user DIO 0|
-|PA1|PIO1|user DIO 1|
-|PA2|PIO2|user DIO 2|
-|PA3|PIO3|user DIO 3|
-|PB0|UA11-IN0|50Ω from ChA to 2v5|
-|PB1|UA11-IN1|50Ω from ChA to GND|
-|PB2|UA11-IN2|ChA close voltage sense loop|
-|PB3|UA11-IN3|ChA connect output|
-|PB5|UB11-IN0|50Ω from ChB to 2v5 |
-|PB6|UB11-IN1|50Ω from ChB to GND|
-|PB7|UB11-IN2|ChB close voltage sense loop|
-|PB8|UB11-IN3|ChB connect output|
-|PB17|PWR_ENABLE|turn on power for analog components|
-|PB19|SWMODE-A|ChA switch SVMI - SIMV|
-|PB20|SWMODE-B|ChB switch SVMI - SIMV|
+Direct control over ADALM1000 functionality can be accomplished using the implemented [USB control transfers](http://www.beyondlogic.org/usbnutshell/usb4.shtml#Control), a synchronous and slow communication endpoint accessible regardless of the configuration of the device.
+
+The M1K implements many control transfers, including the following:
+ * 0x17 - read a number of bytes from the ADM1**17**7 hot-swap controller
+ * 0x50 - **s**et a GPIO pin l**o**w
+ * 0x51 - **s**et a GPIO pin h**i**gh
+ * 0x90 - **g**et a GPIO pin value
+ * 0x53 - **s**et device **m**ode
+ * 0x59 - **s**et **p**otentiometer state
+
+M1K pinmappings are described below.
+
+|IO Name|Net Name|Net Description|Pin ID|
+|-------|--------|---------------|------|
+|PA0|PIO0|user DIO 0|0|
+|PA1|PIO1|user DIO 1|1|
+|PA2|PIO2|user DIO 2|2|
+|PA3|PIO3|user DIO 3|3|
+|PB0|UA11-IN0|50Ω from ChA to 2v5|32|
+|PB1|UA11-IN1|50Ω from ChA to GND|33|
+|PB2|UA11-IN2|ChA close voltage sense loop|34|
+|PB3|UA11-IN3|ChA connect output|35|
+|PB5|UB11-IN0|50Ω from ChB to 2v5 |37|
+|PB6|UB11-IN1|50Ω from ChB to GND|38|
+|PB7|UB11-IN2|ChB close voltage sense loop|39|
+|PB8|UB11-IN3|ChB connect output|40|
+|PB17|PWR_ENABLE|turn on power for analog components|49|
+|PB19|SWMODE-A|ChA switch SVMI - SIMV|51|
+|PB20|SWMODE-B|ChB switch SVMI - SIMV|52|
+
+Note that Pixelpulse2 and LibSMU use many of the above control transfers to configure device state during normal operation. As such, using these control transfers while streaming data may not produce the expected results.
+
+Examples:
+
+### Python
+``` Python
+d = pysmu.Smu()
+# set PIO1 high, then low again
+d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x51, 1, 0, 0, 0, 100);
+d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x50, 1, 0, 0, 0, 100);
+```
+
+### Javascript
+``` Javascript
+# set PIO1 high, then low again
+session.devices[0].ctrl_transfer(0x51, 1, 0);
+session.devices[0].ctrl_transfer(0x50, 1, 0);
+```
+
