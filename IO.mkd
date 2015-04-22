@@ -32,17 +32,17 @@ Note that Pixelpulse2 and LibSMU use many of the above control transfers to conf
 
 Examples:
 
-### Python
+### Python (PySMU)
 ``` Python
 d = pysmu.Smu()
 # set PIO1 high, then low again
-d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x51, 1, 0, 0, 0, 100);
-d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x50, 1, 0, 0, 0, 100);
+d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x51, 1, 0, 0, 0, 100)
+d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x50, 1, 0, 0, 0, 100)
 ```
 
-### Javascript
+### Javascript (Pixelpulse2 `About` Pane)
 ``` Javascript
-# set PIO1 high, then low again
+// set PIO1 high, then low again
 session.devices[0].ctrl_transfer(0x51, 1, 0);
 session.devices[0].ctrl_transfer(0x50, 1, 0);
 ```
