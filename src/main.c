@@ -584,17 +584,25 @@ bool main_setup_handle(void) {
 			}
 			/// Set pin 0
 			case 0x50: {
-				pio_set_pin_low(udd_g_ctrlreq.req.wValue&0xFF);
+				int32_t low = udd_g_ctrlreq.req.wValue & 0x1F;
+				bool PB = udd_g_ctrlreq.req.wValue > 0x1F;
+				pio_set_output(PB ? PIOB: PIOA, 1<<low, LOW, DISABLE, DISABLE);
 				break;
 			}
 			/// Set pin 1
 			case 0x51: {
-				pio_set_pin_high(udd_g_ctrlreq.req.wValue&0xFF);
+				int32_t low = udd_g_ctrlreq.req.wValue & 0x1F;
+				bool PB = udd_g_ctrlreq.req.wValue > 0x1F;
+				pio_set_output(PB ? PIOB: PIOA, 1<<low, HIGH, DISABLE, DISABLE);
 				break;
 			}
-			/// get pin value
-			case 0x90: {
+			/// Set pin input, get pin value
+			case 0x91: {
+				int32_t low = udd_g_ctrlreq.req.wValue & 0x1F;
+				bool PB = udd_g_ctrlreq.req.wValue > 0x1F;
+				pio_set_input(PB ? PIOB: PIOA, 1<<low, 0);
 				ret_data[0] = pio_get_pin_value(udd_g_ctrlreq.req.wValue&0xFF);
+				ptr = (uint8_t*)&ret_data;
 				size = 1;
 				break;
 			}
