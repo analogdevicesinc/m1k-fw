@@ -4,7 +4,7 @@ The M1K implements many control transfers, including the following:
  * 0x17 - read a number of bytes from the ADM1**17**7 hot-swap controller
  * 0x50 - **s**et a GPIO pin l**o**w
  * 0x51 - **s**et a GPIO pin h**i**gh
- * 0x90 - **g**et a GPIO pin value
+ * 0x91 - **g**et a GPIO **i**nput pin value
  * 0x53 - **s**et device **m**ode
  * 0x59 - **s**et **p**otentiometer state
 
@@ -34,13 +34,23 @@ Examples:
 
 ### Python (PySMU)
 ``` Python
-d = pysmu.Smu()
-# set PIO1 high, then low again
-d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x51, 1, 0, 0, 0, 100)
-d.ctrl_transfer("2031315434393235323130323630323", 0x40, 0x50, 1, 0, 0, 0, 100)
+import pysmu
+s = pysmu.Smu()
+ser = s.serials[0]
+# set PIO1 high
+s.ctrl_transfer(ser, 0x40, 0x51, 1, 0, 0, 0, 100)
+# get state of PIO0
+print s.ctrl_transfer(ser, 0xc0, 0x91, 0, 0, 0, 1, 100)
+# set PIO1 low
+s.ctrl_transfer(ser, 0x40, 0x50, 1, 0, 0, 0, 100)
+# get state of PIO0
+print s.ctrl_transfer(ser, 0xc0, 0x91, 0, 0, 0, 1, 100)
 ```
 
 ### Javascript (Pixelpulse2 `About` Pane)
+
+Javascript currently does not support reading parameters from the M1K via control transfer.
+
 ``` Javascript
 // set PIO1 high, then low again
 session.devices[0].ctrl_transfer(0x51, 1, 0);
