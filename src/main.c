@@ -183,12 +183,10 @@ void init_hardware(void) {
 	pmc_enable_periph_clk(ID_TC2);
 
 
-// GPIO
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA0, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA1, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA2, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_OUTPUT_0, PIO_PA3, PIO_DEFAULT);
-
+// GPIOs as inputs - OR of PIO_PA0..PA3
+	pio_configure(PIOA, PIO_INPUT, 0x0F, PIO_DEFAULT);
+// configurable pull resistors disabled
+	pio_configure(PIOA, PIO_INPUT, 0xF0, PIO_DEFAULT);
 
 // LED
 	pio_configure(PIOA, PIO_PERIPH_B, LED_B, PIO_DEFAULT);
