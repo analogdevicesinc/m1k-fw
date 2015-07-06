@@ -9,7 +9,7 @@
 #define A 0
 #define B 1
 
-#define cal_table_base = 0x00080000 + 256*254; 
+#define cal_table_base = 0x00080000 + 256*254;
 
 #ifdef __GNUC__
 #   define likely(x)       __builtin_expect((x),1)
@@ -64,7 +64,7 @@ typedef enum ch_params {
 uint16_t cal_data[IFLASH0_PAGE_SIZE/sizeof(uint16_t)];
 
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
-uint32_t slot_offset;
+uint8_t slot_offset;
 uint32_t packet_index_in;
 uint32_t packet_index_out;
 volatile uint32_t packet_index_send_in;

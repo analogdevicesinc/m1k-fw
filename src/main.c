@@ -102,20 +102,6 @@ void TC2_Handler(void) {
 		return;
 	switch (current_chan) {
 		case A: {
-			switch (slot_offset) {
-				case 127: {
-					packet_index_send_out = packet_index_out^1;
-					send_out = true;
-					break;
-				}
-				case 256: {
-					slot_offset = 0;
-					packet_index_send_in = packet_index_in;
-					packet_index_in ^= 1;
-					packet_index_out ^= 1;
-					send_in = true;
-				}
-			}
 			USART0->US_TPR = (uint32_t)(&da);
 			if (unlikely(interleave_data)) {
 				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+0]);
@@ -164,6 +150,19 @@ void TC2_Handler(void) {
 			USART2->US_RCR = 2;
 			slot_offset += 1;
 			current_chan ^= true;
+			switch (slot_offset) {
+				case 0: {
+					packet_index_send_in = packet_index_in;
+					packet_index_in ^= 1;
+					packet_index_out ^= 1;
+					send_in = true;
+					break;
+				}
+				case 127: {
+					packet_index_send_out = packet_index_out^1;
+					send_out = true;
+				}
+			}
 		}
 	}
 }
