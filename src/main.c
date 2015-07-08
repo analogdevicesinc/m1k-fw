@@ -265,6 +265,7 @@ void init_hardware(void) {
 	tc_init(TC0, 2, TC_CMR_TCCLKS_TIMER_CLOCK1 | TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_ACPA_SET | TC_CMR_ACPC_CLEAR | TC_CMR_BCPB_SET | TC_CMR_BCPC_CLEAR | TC_CMR_EEVT_XC0 );
 // CPAS doesn't matter, CPCS is triggered post-conversion
 	tc_enable_interrupt(TC0, 2, TC_IER_CPCS);
+	NVIC_SetPriority(TC2_IRQn, 0);
 	NVIC_EnableIRQ(TC2_IRQn);
 
 

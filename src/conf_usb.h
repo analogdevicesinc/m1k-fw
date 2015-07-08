@@ -46,6 +46,8 @@ extern uint8_t serial_number[];
 
 #define USB_VERSION USB_V2
 
+#define UDD_USB_INT_LEVEL	1
+
 /// Microsoft WCID descriptor
 typedef struct USB_MicrosoftCompatibleDescriptor_Interface {
     uint8_t bFirstInterfaceNumber;
