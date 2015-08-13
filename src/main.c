@@ -98,8 +98,6 @@ void TC2_Handler(void) {
 	// clear status register
 	((TC0)->TC_CHANNEL+2)->TC_SR;
 	PIOA->PIO_SODR = N_SYNC;
-	if ((!sent_out))
-		return;
 	switch (current_chan) {
 		case A: {
 			USART0->US_TPR = (uint32_t)(&da);
@@ -661,9 +659,12 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, 10);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-10);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-13);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
 					start_frame = udd_g_ctrlreq.req.wIndex;
+					send_out = false;
+					sending_out = true;
+					udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_send_out]), sizeof(OUT_packet), main_vendor_bulk_out_received_first);
 				}
 				break;
 			}
@@ -708,6 +709,18 @@ void main_vendor_bulk_in_received(udd_ep_status_t status,
 }
 
 void main_vendor_bulk_out_received(udd_ep_status_t status,
+		iram_size_t nb_transfered, udd_ep_id_t ep)
+{
+	UNUSED(ep);
+	if (UDD_EP_TRANSFER_OK != status) {
+		return;
+	}
+	else {
+		sending_out = false;
+	}
+}
+
+void main_vendor_bulk_out_received_first(udd_ep_status_t status,
 		iram_size_t nb_transfered, udd_ep_id_t ep)
 {
 	UNUSED(ep);

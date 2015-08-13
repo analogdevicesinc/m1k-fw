@@ -111,5 +111,6 @@ void set_mode(uint32_t chan, chan_mode m);
 
 void main_vendor_bulk_out_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
 void main_vendor_bulk_in_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
+void main_vendor_bulk_out_received_first(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
 
 #endif
