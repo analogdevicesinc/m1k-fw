@@ -7,7 +7,6 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
-static int interleave_data;
 
 // default values for DAC, pots
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
@@ -101,53 +100,37 @@ void TC2_Handler(void) {
 	switch (current_chan) {
 		case A: {
 			USART0->US_TPR = (uint32_t)(&da);
-			if (unlikely(interleave_data)) {
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+0]);
-				USART1->US_TPR = (uint32_t)(&v_adc_conf);
-				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+0]);
-				USART2->US_TPR = (uint32_t)(&i_adc_conf);
-				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+1]);
-			} else {
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_a[slot_offset]);
-				USART1->US_TPR = (uint32_t)(&v_adc_conf);
-				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_v[slot_offset]);
-				USART2->US_TPR = (uint32_t)(&i_adc_conf);
-				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_a_i[slot_offset]);
-			}
-			PIOA->PIO_CODR = N_SYNC;
-			USART0->US_TCR = 1;
-			USART0->US_TNCR = 2;
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+0]);
+			USART1->US_TPR = (uint32_t)(&v_adc_conf);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+0]);
+			USART2->US_TPR = (uint32_t)(&i_adc_conf);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+1]);
 			USART1->US_RCR = 2;
 			USART1->US_TCR = 2;
 			USART2->US_RCR = 2;
 			USART2->US_TCR = 2;
 			current_chan ^= true;
+			PIOA->PIO_CODR = N_SYNC;
+			USART0->US_TCR = 1;
+			USART0->US_TNCR = 2;
 			break;
 		}
 		case B: {
 			USART0->US_TPR = (uint32_t)(&db);
-			if (unlikely(interleave_data)) {
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data[slot_offset*2+1]);
-				USART1->US_TPR = (uint32_t)(&i_adc_conf);
-				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+3]);
-				USART2->US_TPR = (uint32_t)(&v_adc_conf);
-				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data[slot_offset*4+2]);
-			} else {
-				USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out].data_b[slot_offset]);
-				USART1->US_TPR = (uint32_t)(&i_adc_conf);
-				USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_i[slot_offset]);
-				USART2->US_TPR = (uint32_t)(&v_adc_conf);
-				USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in].data_b_v[slot_offset]);
-			}
-			PIOA->PIO_CODR = N_SYNC;
-			USART0->US_TCR = 1;
-			USART0->US_TNCR = 2;
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+1]);
+			USART1->US_TPR = (uint32_t)(&i_adc_conf);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+3]);
+			USART2->US_TPR = (uint32_t)(&v_adc_conf);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+2]);
 			USART1->US_TCR = 2;
 			USART1->US_RCR = 2;
 			USART2->US_TCR = 2;
 			USART2->US_RCR = 2;
-			slot_offset += 1;
 			current_chan ^= true;
+			PIOA->PIO_CODR = N_SYNC;
+			USART0->US_TCR = 1;
+			USART0->US_TNCR = 2;
+			slot_offset += 1;
 			switch (slot_offset) {
 				case 0: {
 					packet_index_send_in = packet_index_in;
@@ -456,12 +439,12 @@ int main(void)
 		if ((!sending_in) & send_in) {
 			send_in = false;
 			sending_in = true;
-			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_send_in]), sizeof(IN_packet), main_vendor_bulk_in_received);
+			udi_vendor_bulk_in_run((uint8_t *)&(packets_in[packet_index_send_in]), 2048, main_vendor_bulk_in_received);
 		}
 		if ((!sending_out) & send_out) {
 			send_out = false;
 			sending_out = true;
-			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_send_out]), sizeof(OUT_packet), main_vendor_bulk_out_received);
+			udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_send_out]), 1024, main_vendor_bulk_out_received);
 		}
 		if (!reset)
 			wdt_restart(WDT);
@@ -623,11 +606,6 @@ bool main_setup_handle(void) {
 				config_hardware();
 				break;
 			}
-			/// Change interleave mode
-			case 0xDD: {
-				interleave_data = udd_g_ctrlreq.req.wValue & 1;
-				break;
-			}
 			/// get USB microframe
 			case 0x6F: {
 				ret_data[0] = frame_number&0xFF;
@@ -646,11 +624,8 @@ bool main_setup_handle(void) {
 					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
 					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
 					current_chan = A;
-					sent_out = false;
 					sent_in = false;
 					sending_in = false;
-					sending_out = false;
-					send_out = true;
 					send_in = false;
 					slot_offset = 0;
 					packet_index_in = 0;
@@ -659,12 +634,13 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, 10);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-13);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-25);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
 					start_frame = udd_g_ctrlreq.req.wIndex;
-					send_out = false;
+					sent_out = false;
 					sending_out = true;
-					udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_send_out]), sizeof(OUT_packet), main_vendor_bulk_out_received_first);
+					send_out = false;
+					udi_vendor_bulk_out_run((uint8_t *)&(packets_out[packet_index_send_out]), 1024, main_vendor_bulk_out_received_first);
 				}
 				break;
 			}

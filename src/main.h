@@ -25,33 +25,14 @@ typedef enum chan_mode{
 	SIMV = 2,
 } chan_mode;
 
-
-typedef union IN_packet {
-	struct {
-		uint16_t data_a_v[256];
-		uint16_t data_a_i[256];
-		uint16_t data_b_v[256];
-		uint16_t data_b_i[256];
-	};
-	uint16_t data[1024];
-} IN_packet;
-
-typedef union OUT_packet {
-	struct {
-		uint16_t data_a[256];
-		uint16_t data_b[256];
-	};
-	uint16_t data[512];
-} OUT_packet;
-
 typedef struct rgb {
     uint8_t r;
 	uint8_t g;
 	uint8_t b;
 } rgb;
 
-IN_packet packets_in[2];
-OUT_packet packets_out[2];
+uint16_t packets_in[2][1024];
+uint16_t packets_out[2][512];
 
 typedef enum ch_params {
 	i0_dac = 0,
