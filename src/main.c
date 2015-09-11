@@ -7,7 +7,6 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
-bool not_a_new_transfer;
 
 // default values for DAC, pots
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
@@ -142,9 +141,7 @@ void TC2_Handler(void) {
 				}
 				case 127: {
 					packet_index_send_out = packet_index_out^1;
-					send_out = not_a_new_transfer;
-					slot_offset *= not_a_new_transfer;
-					not_a_new_transfer = true;
+					send_out = true;
 				}
 			}
 		}
@@ -624,7 +621,6 @@ bool main_setup_handle(void) {
 				}
 				else {
 					// how much state to reset?
-					not_a_new_transfer = false;
 					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
 					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
 					current_chan = A;
