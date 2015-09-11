@@ -634,7 +634,7 @@ bool main_setup_handle(void) {
 				}
 				else {
 					// how much state to reset?
-					not_a_new_transfer = 2;
+					not_a_new_transfer = 4;
 					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
 					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
 					current_chan = A;
