@@ -7,6 +7,7 @@ const char hwversion[] = xstringify(HW_VERSION);
 const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
+uint8_t not_a_new_transfer;
 
 // default values for DAC, pots
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
@@ -99,8 +100,7 @@ void TC2_Handler(void) {
 	PIOA->PIO_SODR = N_SYNC;
 	switch (current_chan) {
 		case A: {
-			USART0->US_TPR = (uint32_t)(&da);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+0]);
+			slot_offset -= 2;
 			USART1->US_TPR = (uint32_t)(&v_adc_conf);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+0]);
 			USART2->US_TPR = (uint32_t)(&i_adc_conf);
@@ -109,6 +109,9 @@ void TC2_Handler(void) {
 			USART1->US_TCR = 2;
 			USART2->US_RCR = 2;
 			USART2->US_TCR = 2;
+			slot_offset += 2;
+			USART0->US_TPR = (uint32_t)(&da);
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+0]);
 			current_chan ^= true;
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
@@ -116,8 +119,7 @@ void TC2_Handler(void) {
 			break;
 		}
 		case B: {
-			USART0->US_TPR = (uint32_t)(&db);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+1]);
+			slot_offset -= 2;
 			USART1->US_TPR = (uint32_t)(&i_adc_conf);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+3]);
 			USART2->US_TPR = (uint32_t)(&v_adc_conf);
@@ -126,6 +128,9 @@ void TC2_Handler(void) {
 			USART1->US_RCR = 2;
 			USART2->US_TCR = 2;
 			USART2->US_RCR = 2;
+			slot_offset += 2;
+			USART0->US_TPR = (uint32_t)(&db);
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+1]);
 			current_chan ^= true;
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
@@ -134,9 +139,17 @@ void TC2_Handler(void) {
 			switch (slot_offset) {
 				case 0: {
 					packet_index_send_in = packet_index_in;
-					packet_index_in ^= 1;
 					packet_index_out ^= 1;
 					send_in = true;
+					break;
+				}
+				case 2: {
+					packet_index_in ^= 1;
+					break;
+				}
+				case 4: {
+					slot_offset -= not_a_new_transfer;
+					not_a_new_transfer = 0;
 					break;
 				}
 				case 127: {
@@ -621,6 +634,7 @@ bool main_setup_handle(void) {
 				}
 				else {
 					// how much state to reset?
+					not_a_new_transfer = 2;
 					udd_ep_abort(UDI_VENDOR_EP_BULK_IN);
 					udd_ep_abort(UDI_VENDOR_EP_BULK_OUT);
 					current_chan = A;
@@ -634,7 +648,7 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, 10);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-25);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-28);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
 					start_frame = udd_g_ctrlreq.req.wIndex;
 					sent_out = false;
