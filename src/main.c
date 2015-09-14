@@ -364,14 +364,15 @@ void set_mode(uint32_t chan, chan_mode m) {
 			switch (m) {
 				case DISABLED: {
 					ma = DISABLED;
+					write_ad5663(0, SWAP16(def_data[i0_dac]));
 					pio_set(PIOB, PIO_PB19); // simv
 					pio_clear(PIOB, PIO_PB2);
 					pio_set(PIOB, PIO_PB3);
-					write_ad5663(0, SWAP16(def_data[i0_dac]));
 					break;
-					}
+				}
 				case SVMI: {
 					ma = SVMI;
+					write_ad5663(0, 0);
 					pio_clear(PIOB, PIO_PB19); // modeswitch = svmi
 					pio_clear(PIOB, PIO_PB2);
 					pio_clear(PIOB, PIO_PB3); // enable output
@@ -379,6 +380,7 @@ void set_mode(uint32_t chan, chan_mode m) {
 				}
 				case SIMV: {
 					ma = SIMV;
+					write_ad5663(0, SWAP16(def_data[i0_dac]));
 					pio_set(PIOB, PIO_PB19); // simv
 					pio_clear(PIOB, PIO_PB2);
 					pio_clear(PIOB, PIO_PB3); // enable output
@@ -392,14 +394,15 @@ void set_mode(uint32_t chan, chan_mode m) {
 			switch (m) {
 				case DISABLED: {
 					mb = DISABLED;
+					write_ad5663(1, SWAP16(def_data[i0_dac]));
 					pio_set(PIOB, PIO_PB20); // simv
 					pio_clear(PIOB, PIO_PB7);
 					pio_set(PIOB, PIO_PB8); // disconnect output
-					write_ad5663(1, SWAP16(def_data[i0_dac]));
 					break;
-					}
+				}
 				case SVMI: {
 					mb = SVMI;
+					write_ad5663(1, 0);
 					pio_clear(PIOB, PIO_PB20); // modeswitch = svmi
 					pio_clear(PIOB, PIO_PB7);
 					pio_clear(PIOB, PIO_PB8); // enable output
@@ -407,6 +410,7 @@ void set_mode(uint32_t chan, chan_mode m) {
 				}
 				case SIMV: {
 					mb = SIMV;
+					write_ad5663(1, SWAP16(def_data[i0_dac]));
 					pio_set(PIOB, PIO_PB20); // simv
 					pio_clear(PIOB, PIO_PB7);
 					pio_clear(PIOB, PIO_PB8); // enable output
@@ -439,8 +443,8 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
-	write_ad5663(0, def_data[i0_dac]);
-	write_ad5663(1, def_data[i0_dac]);
+	write_ad5663(0, SWAP16(def_data[i0_dac]));
+	write_ad5663(1, SWAP16(def_data[i0_dac]));
 	// set pots for a sensible default
 	cpu_delay_us(100, F_CPU);
 	write_ad5122(0, def_data[p1_simv], def_data[p2_simv]);
