@@ -439,8 +439,8 @@ int main(void)
 	udc_start();
 	cpu_delay_us(10, F_CPU);
 	udc_attach();
-	write_ad5663(0, def_data[i0_dac]);
-	write_ad5663(1, def_data[i0_dac]);
+	write_ad5663(0, SWAP16(def_data[i0_dac]));
+	write_ad5663(1, SWAP16(def_data[i0_dac]));
 	// set pots for a sensible default
 	cpu_delay_us(100, F_CPU);
 	write_ad5122(0, def_data[p1_simv], def_data[p2_simv]);
