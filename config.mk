@@ -11,6 +11,7 @@ BUILD_DIR = ./asf
 # List of C source files.
 CSRCS = \
        ../src/main.c \
+	   common/boards/user_board/init.c                    \
        common/services/clock/sam3u/sysclk.c               \
        common/services/delay/sam/cycle_counter.c          \
        common/services/sleepmgr/sam/sleepmgr.c            \
@@ -42,6 +43,7 @@ ASSRCS =
 INC_PATH = \
        ../src \
        common/boards                                      \
+	   common/boards/user_board                           \
        common/services/delay                              \
        common/services/clock                              \
        common/services/gpio                               \
@@ -52,8 +54,6 @@ INC_PATH = \
        common/services/usb/class/vendor                   \
        common/services/usb/class/vendor/device            \
        common/utils                                       \
-       sam/boards                                         \
-       sam/boards/sam3u_ek                                \
        sam/drivers/pio                                    \
        sam/services/flash_efc                             \
        sam/drivers/efc                                    \
@@ -85,7 +85,7 @@ LIBS =  \
 LINKER_SCRIPT_FLASH = ../scripts/flash.ld
 
 # Path relative to top level directory pointing to a linker script.
-DEBUG_SCRIPT_FLASH = sam/boards/sam3u_ek/debug_scripts/gcc/sam3u_ek_flash.gdb
+DEBUG_SCRIPT_FLASH =
 
 # Project type parameter: all, sram or flash
 PROJECT_TYPE        = flash
@@ -118,10 +118,10 @@ CFLAGS = -fstack-usage -Wno-attributes
 #   EXT_BOARD  Optional extension board in use, see boards/board.h for a list.
 CPPFLAGS = \
        -D ARM_MATH_CM3=true                               \
-       -D BOARD=SAM3U_EK                                  \
+       -D BOARD=USER_BOARD                                \
        -D UDD_ENABLE                                      \
        -D __SAM3U2C__                                     \
        -D printf=iprintf
 
 # Extra flags to use when linking
-LDFLAGS = 
+LDFLAGS =

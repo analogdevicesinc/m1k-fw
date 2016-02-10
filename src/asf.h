@@ -56,7 +56,6 @@
 #include <compiler.h>
 #include <status_codes.h>
 
-#include <gpio.h>
 #include <board.h>
 #include <ioport.h>
 #include <interrupt.h>
@@ -67,7 +66,6 @@
 #include <pmc.h>
 #include <sleep.h>
 #include <parts.h>
-#include <led.h>
 #include <exceptions.h>
 #include <sam/sleepmgr.h>
 #include <sleepmgr.h>

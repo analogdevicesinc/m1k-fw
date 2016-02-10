@@ -1,8 +1,6 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-#include <asf.h>
-
 #define stringify(x)			#x
 #define xstringify(s) stringify(s)
 #define SWAP16(x)        ((((x) & 0xff00)>> 8) | (((x) & 0x00ff) << 8))
