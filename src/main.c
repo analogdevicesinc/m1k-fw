@@ -420,11 +420,45 @@ void set_mode(uint32_t chan, chan_mode m) {
 	}
 }
 
+static void read_cal_table(void)
+{
+	uint8_t *cal = (uint8_t *)CAL_TABLE_BASE;
+	uint16_t i;
+
+	for (i = 0; i < IFLASH0_PAGE_SIZE; i++)
+		cal_table[i] = cal[i];
+}
+
+static void store_cal_table(void)
+{
+	uint32_t ret;
+
+	ret = flash_init(FLASH_ACCESS_MODE_128, 6);
+	if (ret != FLASH_RC_OK)
+		return;
+
+	ret = flash_unlock(CAL_TABLE_BASE,
+					   CAL_TABLE_BASE + IFLASH0_PAGE_SIZE - 1, 0, 0);
+	if (ret != FLASH_RC_OK)
+		return;
+
+	ret = flash_write(CAL_TABLE_BASE, cal_table,
+					  IFLASH0_PAGE_SIZE, 1);
+	if (ret != FLASH_RC_OK)
+		return;
+
+	ret = flash_lock(CAL_TABLE_BASE,
+					 CAL_TABLE_BASE + IFLASH0_PAGE_SIZE - 1, 0, 0);
+	if (ret != FLASH_RC_OK)
+		return;
+}
+
 int main(void)
 {
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	sysclk_init();
+	read_cal_table();
 	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
 	// enable WDT for "fairly short"
@@ -447,6 +481,7 @@ int main(void)
 	cpu_delay_us(100, F_CPU);
 	write_ad5122(1, def_data[p1_simv], def_data[p2_simv]);
 	cpu_delay_us(100, F_CPU);
+	asm("nop");
 
 	while (true) {
 		if ((!sending_in) & send_in) {
@@ -566,6 +601,21 @@ bool main_setup_handle(void) {
 						break;
 				}
 				break;
+			}
+			// Read calibration table
+			case 0x01: {
+				ptr = (uint8_t*)&cal_table[udd_g_ctrlreq.req.wIndex];
+				size = udd_g_ctrlreq.req.wLength;
+				break;
+			}
+			// Write calibration table
+			case 0x02: {
+				//read_calib_coeff();
+				udd_g_ctrlreq.payload_size = udd_g_ctrlreq.req.wLength;
+				udd_g_ctrlreq.payload = (uint8_t*)&cal_table[udd_g_ctrlreq.req.wIndex];
+				udd_g_ctrlreq.callback = store_cal_table;
+				udd_g_ctrlreq.over_under_run = 0;
+				return true;
 			}
 			/// read ADM1177
 			case 0x17: {
