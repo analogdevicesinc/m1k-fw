@@ -56,30 +56,73 @@
 #include <compiler.h>
 #include <status_codes.h>
 
-#include <board.h>
-#include <ioport.h>
-#include <interrupt.h>
-#include <pio.h>
-#include <twi.h>
+// From module: Common build items for user board support templates
+#include <user_board.h>
 
-#include <usart.h>
+// From module: Delay routines
+#include <delay.h>
+
+// From module: EEFC - Enhanced Embedded Flash Controller
+#include <efc.h>
+
+// From module: Flash - SAM Flash Service API
+#include <flash_efc.h>
+
+// From module: Generic board support
+#include <board.h>
+
+// From module: IOPORT - General purpose I/O service
+#include <ioport.h>
+
+// From module: Interrupt management - SAM implementation
+#include <interrupt.h>
+
+// From module: PIO - Parallel Input/Output Controller
+#include <pio.h>
+
+// From module: PMC - Power Management Controller
 #include <pmc.h>
 #include <sleep.h>
+
+// From module: PWM - Pulse Width Modulation
+#include <pwm.h>
+
+// From module: Part identification macros
 #include <parts.h>
+
+// From module: SAM3U startup code
 #include <exceptions.h>
+
+// From module: Sleep manager - SAM implementation
 #include <sam/sleepmgr.h>
 #include <sleepmgr.h>
+
+// From module: System Clock Control - SAM3U implementation
 #include <sysclk.h>
+
+// From module: TC - Timer Counter
+#include <tc.h>
+
+// From module: TWI - Two-wire Interface
+#include <twi.h>
+
+// From module: USART - Univ. Syn Async Rec/Trans
+#include <usart.h>
+
+// From module: USB Device Stack Core (Common API)
 #include <udc.h>
 #include <udd.h>
+
+// From module: USB Device Vendor Class (Single Interface Device)
 #include <udi_vendor.h>
+
+// From module: USB Vendor Protocol
 #include <usb_protocol_vendor.h>
+
+// From module: WDT - Watchdog Timer
+#include <wdt.h>
+
+// From module: pio_handler support enabled
 #include <pio_handler.h>
 
-#include <flash_efc.h>
-#include <efc.h>
-#include <sam/cycle_counter.h>
-#include <wdt.h>
-#include <tc.h>
-#include <pwm.h>
 #endif // ASF_H
