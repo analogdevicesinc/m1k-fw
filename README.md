@@ -49,3 +49,27 @@ the board, by the labels for the PIO connector. The device should disconnect
 from USB and re-enumerate as a SAMBA bootloader device / USB modem. For more
 information, see [this detailed image](http://imgur.com/tOdcnSb) calling out
 the bootloader jumper.
+
+### Updating manually via the commandline
+
+To update via the commandline, first the bossac application must be built or
+downloaded. For Windows and OS X the following binaries are available.
+
+* [OSX](http://bossaosx.s3-website-us-west-2.amazonaws.com/bossac)
+* [Win32](https://ci.appveyor.com/project/analogdevicesinc/bossa/build/artifacts)
+
+For Linux, it's easy to build your own via:
+
+	git clone https://github.com/analogdevicesinc/BOSSA.git
+	cd BOSSA
+	make bin/bossac
+	cd bin
+
+Make sure the device is in programming mode (the LED should be off). To
+forcibly enable that mode, short the pads on top of the board as described on
+the [wiki](https://wiki.analog.com/university/tools/m1k-firmware-upgrade#manual_update).
+
+Then using the bossac application run something similar to following command
+(altering where necessary for OS differences:
+
+	./bossac -e -w -v -b /path/to/firmware/file
