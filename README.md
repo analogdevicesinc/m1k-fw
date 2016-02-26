@@ -66,8 +66,8 @@ For Linux, it's easy to build your own via:
 	cd bin
 
 Make sure the device is in programming mode (the LED should be off). To
-forcibly enable that mode, short the pads on top of the board as described on
-the [wiki](https://wiki.analog.com/university/tools/m1k-firmware-upgrade#manual_update).
+forcibly enable the mode, short the pads on top of the board as seen in
+[this image](https://wiki.analog.com/_media/university/tools/m1k-fw-erase.jpg).
 
 Then using the bossac application, run something similar to following command
 (altering where necessary for OS differences):
