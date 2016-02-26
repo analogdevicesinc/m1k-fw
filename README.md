@@ -69,7 +69,7 @@ Make sure the device is in programming mode (the LED should be off). To
 forcibly enable that mode, short the pads on top of the board as described on
 the [wiki](https://wiki.analog.com/university/tools/m1k-firmware-upgrade#manual_update).
 
-Then using the bossac application run something similar to following command
-(altering where necessary for OS differences:
+Then using the bossac application, run something similar to following command
+(altering where necessary for OS differences):
 
 	./bossac -e -w -v -b /path/to/firmware/file
