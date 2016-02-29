@@ -22,6 +22,9 @@ raw += '\x00'*(256-len(raw)%256)
 fw = bitstring.ConstBitStream(bytes=raw)
 
 dev = usb.core.find(idVendor=0x03eb,idProduct=0x6124)
+if dev is None:
+    print "no device found"
+    sys.exit(1)
 
 try:
 	dev.detach_kernel_driver(0)
