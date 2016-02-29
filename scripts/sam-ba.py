@@ -8,6 +8,7 @@ from __future__ import print_function
 import bitstring
 import glob
 import io
+import os
 import sys
 import time
 import usb
@@ -54,8 +55,18 @@ getStr()
 
 page = 0
 
+try:
+    firmware_file = sys.argv[1]
+except IndexError:
+    # fallback to current dir
+    firmware_file = './m1000.bin'
+
+if not os.path.exists(firmware_file):
+    print("firmware file doesn't exist: %s".format(firmware_file))
+    sys.exit(1)
+
 # read in firmware file
-raw = io.open('./m1000.bin', mode='rb').read()
+raw = io.open(firmware_file, mode='rb').read()
 raw += b'\x00'*(256-len(raw)%256)
 fw = bitstring.ConstBitStream(bytes=raw)
 
