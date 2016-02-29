@@ -3,27 +3,25 @@
 # This is fully functional sam-ba client capable of loading a binary executable onto the internal flash of a sam3u processor.
 # This code is not impacted by any of the bugs in the ROM
 
+from __future__ import print_function
+
 import bitstring
 import glob
+import io
 import sys
 import time
 import usb
 
 # make sure we're using >=pyusb-1
 if usb.version_info[0] < 1:
-    print "pyusb-1 or newer is required"
+    print("pyusb-1 or newer is required")
     sys.exit(1)
 
-print "please wait..."
-
-raw = open("./m1000.bin").read()
-raw += '\x00'*(256-len(raw)%256)
-
-fw = bitstring.ConstBitStream(bytes=raw)
+print("please wait...")
 
 dev = usb.core.find(idVendor=0x03eb,idProduct=0x6124)
 if dev is None:
-    print "no device found"
+    print("no device found")
     sys.exit(1)
 
 try:
@@ -56,8 +54,13 @@ getStr()
 
 page = 0
 
+# read in firmware file
+raw = io.open('./m1000.bin', mode='rb').read()
+raw += b'\x00'*(256-len(raw)%256)
+fw = bitstring.ConstBitStream(bytes=raw)
+
 # write each word
-for pos in xrange(0,fw.length/8,4):
+for pos in range(0,int(fw.length/8),4):
 	fw.bytepos = pos
 	addr = hex(flashBase+pos).lstrip("0x").rstrip("L").zfill(8)
 	data = hex(fw.peek("<L")).lstrip("0x").rstrip("L").zfill(8)
@@ -67,7 +70,7 @@ for pos in xrange(0,fw.length/8,4):
 		getStr()
 		getStr()
 	except:
-		print 'error at', cmd
+		print('error at ' + cmd)
 		quit()
 	# if at end of page
 	if pos & 0xFC == 0xFC:
@@ -95,4 +98,4 @@ getStr()
 putStr("G00000000#")
 getStr()
 
-print "good to go!"
+print("good to go!")
