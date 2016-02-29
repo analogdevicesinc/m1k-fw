@@ -22,7 +22,7 @@ print("please wait...")
 
 dev = usb.core.find(idVendor=0x03eb,idProduct=0x6124)
 if dev is None:
-    print("no device found")
+    print("no device found, make sure the device is in command mode")
     sys.exit(1)
 
 try:
@@ -31,7 +31,11 @@ try:
 except:
     pass
 
-dev.set_configuration(1)
+try:
+    dev.set_configuration(1)
+except usb.core.USBError:
+    print('error configuring device, trying unplugging and plugging it back in')
+    sys.exit(1)
 regBase = 0x400e0800
 flashBase = 0x80000
 offset = 0
@@ -53,8 +57,6 @@ getStr()
 getStr()
 getStr()
 
-page = 0
-
 try:
     firmware_file = sys.argv[1]
 except IndexError:
@@ -62,7 +64,7 @@ except IndexError:
     firmware_file = './m1000.bin'
 
 if not os.path.exists(firmware_file):
-    print("firmware file doesn't exist: %s".format(firmware_file))
+    print("firmware file doesn't exist: {}".format(firmware_file))
     sys.exit(1)
 
 # read in firmware file
@@ -71,7 +73,8 @@ raw += b'\x00'*(256-len(raw)%256)
 fw = bitstring.ConstBitStream(bytes=raw)
 
 # write each word
-for pos in range(0,int(fw.length/8),4):
+page = 0
+for pos in range(0, int(fw.length/8), 4):
     fw.bytepos = pos
     addr = hex(flashBase+pos).lstrip("0x").rstrip("L").zfill(8)
     data = hex(fw.peek("<L")).lstrip("0x").rstrip("L").zfill(8)
@@ -96,9 +99,11 @@ for pos in range(0,int(fw.length/8),4):
         time.sleep(0.01)
         getStr()
         getStr()
-        assert int(getStr().strip(), 16) == 1
+        page_status = getStr().strip()
+        if not page_status or int(page_status, 16) != 1:
+            print('error writing page {}'.format(page))
+            sys.exit(1)
         page += 1
-
 
 # disable SAM-BA
 putStr("W400E0804,5A00010B#")
