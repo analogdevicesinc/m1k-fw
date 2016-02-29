@@ -5,8 +5,14 @@
 
 import bitstring
 import glob
+import sys
 import time
 import usb
+
+# make sure we're using >=pyusb-1
+if usb.version_info[0] < 1:
+    print "pyusb-1 or newer is required"
+    sys.exit(1)
 
 print "please wait..."
 
