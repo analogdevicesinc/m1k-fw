@@ -25,10 +25,10 @@ if dev is None:
     sys.exit(1)
 
 try:
-	dev.detach_kernel_driver(0)
-	dev.detach_kernel_driver(1)
+    dev.detach_kernel_driver(0)
+    dev.detach_kernel_driver(1)
 except:
-	pass
+    pass
 
 dev.set_configuration(1)
 regBase = 0x400e0800
@@ -36,10 +36,10 @@ flashBase = 0x80000
 offset = 0
 
 def getStr():
-	return ''.join(map(chr, dev.read(0x82, 512, 1)))
+    return ''.join(map(chr, dev.read(0x82, 512, 1)))
 
 def putStr(x):
-	return dev.write(0x01, x, 1)
+    return dev.write(0x01, x, 1)
 
 # erase flash
 putStr("W400E0804,5A000005#")
@@ -61,32 +61,32 @@ fw = bitstring.ConstBitStream(bytes=raw)
 
 # write each word
 for pos in range(0,int(fw.length/8),4):
-	fw.bytepos = pos
-	addr = hex(flashBase+pos).lstrip("0x").rstrip("L").zfill(8)
-	data = hex(fw.peek("<L")).lstrip("0x").rstrip("L").zfill(8)
-	cmd = ("W"+addr+","+data+"#").upper()
-	try:
-		putStr(cmd)
-		getStr()
-		getStr()
-	except:
-		print('error at ' + cmd)
-		quit()
-	# if at end of page
-	if pos & 0xFC == 0xFC:
-		# write page
-		cmd = "W400E0804,5A00"+hex(page).lstrip("0x").zfill(2)+"03#"
-		putStr(cmd)
-		time.sleep(0.01)
-		getStr()
-		getStr()
-		# check that page is written
-		putStr("w400E0808,4#")
-		time.sleep(0.01)
-		getStr()
-		getStr()
-		assert int(getStr().strip(), 16) == 1
-		page += 1
+    fw.bytepos = pos
+    addr = hex(flashBase+pos).lstrip("0x").rstrip("L").zfill(8)
+    data = hex(fw.peek("<L")).lstrip("0x").rstrip("L").zfill(8)
+    cmd = ("W"+addr+","+data+"#").upper()
+    try:
+        putStr(cmd)
+        getStr()
+        getStr()
+    except:
+        print('error at ' + cmd)
+        quit()
+    # if at end of page
+    if pos & 0xFC == 0xFC:
+        # write page
+        cmd = "W400E0804,5A00"+hex(page).lstrip("0x").zfill(2)+"03#"
+        putStr(cmd)
+        time.sleep(0.01)
+        getStr()
+        getStr()
+        # check that page is written
+        putStr("w400E0808,4#")
+        time.sleep(0.01)
+        getStr()
+        getStr()
+        assert int(getStr().strip(), 16) == 1
+        page += 1
 
 
 # disable SAM-BA
