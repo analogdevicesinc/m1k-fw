@@ -50,10 +50,29 @@ from USB and re-enumerate as a SAMBA bootloader device / USB modem. For more
 information, see [this detailed image](http://imgur.com/tOdcnSb) calling out
 the bootloader jumper.
 
-### Updating manually via the commandline
+### Flashing manually via the command line
 
-To update via the commandline, first the bossac application must be built or
-downloaded. For Windows and OS X the following binaries are available.
+There are two options for flashing from the command line. The first is to use
+the previously mentioned sam-ba.py script in this repository or use the bossac
+application.
+
+#### Using the python script
+
+The script's dependencies are [pyusb](https://pypi.python.org/pypi/pyusb) and
+[bitstring](https://pypi.python.org/pypi/bitstring). Either python-2.7 or
+python-3.3 and up should work.
+
+From the root directory of the repository run the script using the following:
+
+	python scripts/sam-ba.py /path/to/firmware/file
+
+If no firmware file path is specified the script currently tries to use the
+m1000.bin file in the root directory of the repository.
+
+#### Using bossac
+
+First the bossac application must be built or downloaded. For Windows and OS X
+the following binaries are available.
 
 * [OSX](http://bossaosx.s3-website-us-west-2.amazonaws.com/bossac)
 * [Win32](https://ci.appveyor.com/project/analogdevicesinc/bossa/build/artifacts)
