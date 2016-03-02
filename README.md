@@ -56,6 +56,10 @@ There are two options for flashing from the command line. The first is to use
 the previously mentioned sam-ba.py script in this repository or use the bossac
 application.
 
+Both require the device to be in programming mode in which the LED should be
+off. To forcibly enable the mode, short the pads on top of the board as seen in
+[this image](https://wiki.analog.com/_media/university/tools/m1k-fw-erase.jpg).
+
 #### Using the python script
 
 The script's dependencies are [pyusb](https://pypi.python.org/pypi/pyusb) and
@@ -83,10 +87,6 @@ For Linux, it's easy to build your own via:
 	cd BOSSA
 	make bin/bossac
 	cd bin
-
-Make sure the device is in programming mode (the LED should be off). To
-forcibly enable the mode, short the pads on top of the board as seen in
-[this image](https://wiki.analog.com/_media/university/tools/m1k-fw-erase.jpg).
 
 Then using the bossac application, run something similar to following command
 (altering where necessary for OS differences):
