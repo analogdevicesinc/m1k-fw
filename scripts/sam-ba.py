@@ -6,6 +6,7 @@
 from __future__ import print_function
 
 import bitstring
+import errno
 import glob
 import io
 import os
@@ -25,7 +26,11 @@ if usb.version_info[0] < 1:
 m1k = usb.core.find(idVendor=0x064b, idProduct=0x784c)
 if m1k is not None:
     print("m1k device found, forcing into command mode")
-    m1k.ctrl_transfer(0x40, 0xBB)
+    try:
+        m1k.ctrl_transfer(0x40, 0xBB)
+    except usb.core.USBError as e:
+        if e.errno != errno.EIO:
+            raise
     # wait for the device to be re-enumerated
     time.sleep(1)
 
