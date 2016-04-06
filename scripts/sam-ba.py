@@ -10,8 +10,11 @@ import glob
 import io
 import os
 import sys
+from signal import signal, SIG_DFL, SIGINT
 import time
 import usb
+
+signal(SIGINT, SIG_DFL)
 
 # make sure we're using >=pyusb-1
 if usb.version_info[0] < 1:
