@@ -18,11 +18,20 @@ if usb.version_info[0] < 1:
     print("pyusb-1 or newer is required")
     sys.exit(1)
 
-print("please wait...")
+# look for m1k
+m1k = usb.core.find(idVendor=0x064b, idProduct=0x784c)
+if m1k is not None:
+    print("m1k device found, forcing into command mode")
+    m1k.ctrl_transfer(0x40, 0xBB)
+    # wait for the device to be re-enumerated
+    time.sleep(1)
 
-dev = usb.core.find(idVendor=0x03eb,idProduct=0x6124)
+# look for m1k in programming mode
+dev = usb.core.find(idVendor=0x03eb, idProduct=0x6124)
 if dev is None:
-    print("no device found, make sure the device is in command mode")
+    print(
+        "no device found, make sure an m1k is plugged in and "
+        "if necessary force it into command mode")
     sys.exit(1)
 
 try:
@@ -45,6 +54,8 @@ def getStr():
 
 def putStr(x):
     return dev.write(0x01, x, 1)
+
+print("please wait, flashing device firmware")
 
 # erase flash
 putStr("W400E0804,5A000005#")
@@ -114,4 +125,4 @@ getStr()
 putStr("G00000000#")
 getStr()
 
-print("good to go!")
+print("successfully updated firmware, please unplug and replug the device to finish the process")
