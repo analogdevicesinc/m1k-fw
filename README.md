@@ -8,9 +8,7 @@ Contents](https://wiki.analog.com/university/tools/m1k).
 With `arm-none-eabi-gcc` version 4.7 or later installed, run the following
 commands:
 
-* `git clone --recursive https://github.com/analogdevicesinc/m1k-fw.git` - this
-  command will take awhile to complete as it fetches the Atmel Software
-  Framework.
+* `git clone https://github.com/analogdevicesinc/m1k-fw.git`
 * `sudo make flash` - this command will build the firmware image and attempt to
   load it onto any attached SAM3U devices with either SAMBA or M1K vendor IDs.
 
