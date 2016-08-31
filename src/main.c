@@ -294,8 +294,8 @@ void init_hardware(void) {
 
 /// post-setup, write necessary configurations to hotswap and DAC
 void config_hardware() {
-	// continuous V&I conversion
-	write_adm1177(0b00010101);
+	// status read
+	write_adm1177(0b01000000);
 	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
@@ -327,11 +327,10 @@ void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 void write_adm1177(uint8_t v) {
 	twi_packet_t p;
 	p.chip = 0x58; // 7b addr of '1177 w/ addr p grounded
-	p.addr_length = 1;
-	p.addr[0] = v;
-	p.length = 0;
+	p.length = 1;
+	p.buffer = &v;
+	p.addr_length = 0;
 	twi_master_write(TWI0, &p);
-
 }
 
 /// read controller register
@@ -481,6 +480,7 @@ int main(void)
 	cpu_delay_us(100, F_CPU);
 	write_ad5122(1, def_data[p1_simv], def_data[p2_simv]);
 	cpu_delay_us(100, F_CPU);
+	asm("nop");
 	asm("nop");
 
 	while (true) {
