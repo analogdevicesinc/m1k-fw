@@ -6,7 +6,7 @@ PART = sam3u2c
 # standalone application.
 TARGET_FLASH = m1000.elf
 
-BUILD_DIR = ./asf
+BUILD_DIR = build
 
 # List of C source files.
 CSRCS = \
