@@ -16,5 +16,5 @@ GIT_VERSION=$(shell git describe --always --dirty='*')
 include asf/sam/utils/make/Makefile.sam.in
 
 cflags-gnu-y += -D'HW_VERSION=$(HW_VERSION)'
-cflags-gnu-y += -D'FW_VERSION=2.07'
+cflags-gnu-y += -D'FW_VERSION=2.08'
 

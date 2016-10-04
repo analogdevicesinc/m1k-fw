@@ -3,7 +3,7 @@
 #include "conf_usb.h"
 #include "conf_board.h"
 
-const char hwversion[] = xstringify(HW_VERSION);
+char hwversion[2] = {'D', 0};
 const char fwversion[] = xstringify(FW_VERSION);
 chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
@@ -419,6 +419,20 @@ void set_mode(uint32_t chan, chan_mode m) {
 	}
 }
 
+static void get_hwversion(void)
+{
+	uint32_t pin_value;
+
+	pmc_enable_periph_clk(ID_PIOB);
+	pio_set_input(PIOB, PIO_PB21, PIO_PULLUP);
+	pio_set_input(PIOB, PIO_PB22, PIO_PULLUP);
+	pio_set_input(PIOB, PIO_PB23, PIO_PULLUP);
+
+	pin_value = pio_get_pin_value(PIO_PB21_IDX);
+	if (!pin_value)
+		hwversion[0] = 'E';
+}
+
 static void read_cal_table(void)
 {
 	uint8_t *cal = (uint8_t *)CAL_TABLE_BASE;
@@ -457,6 +471,7 @@ int main(void)
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	sysclk_init();
+	get_hwversion();
 	read_cal_table();
 	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
@@ -464,6 +479,7 @@ int main(void)
 	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
 	// setup peripherals
 	init_hardware();
+
 	// start USB
 	cpu_delay_us(100, F_CPU);
 
