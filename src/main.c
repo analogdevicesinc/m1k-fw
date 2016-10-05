@@ -19,13 +19,6 @@ uint16_t i_adc_conf = 0x20F7;
 uint8_t da = 0;
 uint8_t db = 1;
 uint32_t frame_number = 0;
-pwm_channel_t PWM_CH;
-
-static pwm_clock_t PWM_SETTINGS = {
-	.ul_clka = 1e6,
-	.ul_clkb = 0,
-	.ul_mck = F_CPU
-};
 
 static  usart_spi_opt_t USART_SPI_ADC =
 {
@@ -50,40 +43,6 @@ static twi_options_t TWIM_CONFIG =
 	.chip = 0,
 	.smbus = 0,
 };
-
-/* Credit to Tod E. Kurt, ThingM, tod@todbot.com
- * Given a variable hue 'h', that ranges from 0-252,
- * set RGB color value appropriately.
- * Assumes maximum Saturation & maximum Value (brightness)
- * Performs purely integer math, no floating point.
- */
-void h_to_rgb(uint8_t h, rgb* c)
-{
-	uint8_t hd = h / 42;   // 42 == 252/6,  252 == H_MAX
-	uint8_t hi = hd % 6;   // gives 0-5
-	uint8_t f = h % 42;
-	uint8_t fs = f * 6;
-	switch( hi ) {
-		case 0:
-			c->r = 252;	 c->g = fs;	  c->b = 0;
-		   break;
-		case 1:
-			c->r = 252-fs;  c->g = 252;	 c->b = 0;
-			break;
-		case 2:
-			c->r = 0;	   c->g = 252;	 c->b = fs;
-			break;
-		case 3:
-			c->r = 0;	   c->g = 252-fs;  c->b = 252;
-			break;
-		case 4:
-			c->r = fs;	  c->g = 0;	   c->b = 252;
-			break;
-		case 5:
-			c->r = 252;	 c->g = 0;	   c->b = 252-fs;
-			break;
-	}
-}
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
@@ -172,7 +131,6 @@ void init_hardware(void) {
 	pmc_enable_periph_clk(ID_USART2);
 	pmc_enable_periph_clk(ID_TC0);
 	pmc_enable_periph_clk(ID_TC1);
-	pmc_enable_periph_clk(ID_PWM);
 	pmc_enable_periph_clk(ID_TC2);
 
 
@@ -182,9 +140,11 @@ void init_hardware(void) {
 	pio_configure(PIOA, PIO_INPUT, 0xF0, PIO_DEFAULT);
 
 // LED
-	pio_configure(PIOA, PIO_PERIPH_B, LED_B, PIO_DEFAULT);
-	pio_configure(PIOA, PIO_PERIPH_B, LED_G, PIO_DEFAULT);
-	pio_configure(PIOB, PIO_PERIPH_B, LED_R, PIO_DEFAULT);
+	if (hwversion[0] == 'D') {
+		pio_set_output(PIOB, PIO_PB15, HIGH, DISABLE, DISABLE);	// LED_RED
+		pio_set_output(PIOA, PIO_PA29, LOW, DISABLE, DISABLE);	// LED_GREEN
+		pio_set_output(PIOA, PIO_PA28, HIGH, DISABLE, DISABLE);	// LED_BLUE
+	}
 
 	pio_configure(PIOB, PIO_OUTPUT_1, PWR, PIO_DEFAULT);
 
@@ -261,35 +221,6 @@ void init_hardware(void) {
 	tc_enable_interrupt(TC0, 2, TC_IER_CPCS);
 	NVIC_SetPriority(TC2_IRQn, 0);
 	NVIC_EnableIRQ(TC2_IRQn);
-
-
-// set RGB LED to hue generated from UID
-	uint32_t uid[4];
-	rgb c;
-	flash_read_unique_id(uid, 4);
-	uint8_t h = uid[3] % 252;
-	h_to_rgb(h, &c);
-
-
-	pwm_channel_disable(PWM, PWM_CHANNEL_0); // PA28 - blue - PWMH0
-	pwm_channel_disable(PWM, PWM_CHANNEL_1); // PA29 - green - PWMH1
-	pwm_channel_disable(PWM, PWM_CHANNEL_2); // PB15 - red - PWMH2
-	pwm_init(PWM, &PWM_SETTINGS);
-	PWM_CH.ul_prescaler = PWM_CMR_CPRE_CLKA;
-	PWM_CH.ul_period = 256;
-	PWM_CH.ul_duty = c.b<<3;
-	PWM_CH.channel = PWM_CHANNEL_0;
-	pwm_channel_init(PWM, &PWM_CH);
-	PWM_CH.ul_duty = c.g<<3;
-	PWM_CH.channel = PWM_CHANNEL_1;
-	pwm_channel_init(PWM, &PWM_CH);
-	PWM_CH.ul_duty = c.r<<3;
-	PWM_CH.channel = PWM_CHANNEL_2;
-	pwm_channel_init(PWM, &PWM_CH);
-	pwm_channel_enable(PWM, PWM_CHANNEL_0);
-	pwm_channel_enable(PWM, PWM_CHANNEL_1);
-	pwm_channel_enable(PWM, PWM_CHANNEL_2);
-
 }
 
 /// post-setup, write necessary configurations to hotswap and DAC
@@ -496,8 +427,6 @@ int main(void)
 	cpu_delay_us(100, F_CPU);
 	write_ad5122(1, def_data[p1_simv], def_data[p2_simv]);
 	cpu_delay_us(100, F_CPU);
-	asm("nop");
-	asm("nop");
 
 	while (true) {
 		if ((!sending_in) & send_in) {
@@ -631,6 +560,16 @@ bool main_setup_handle(void) {
 				udd_g_ctrlreq.payload = (uint8_t*)&cal_table[udd_g_ctrlreq.req.wIndex];
 				udd_g_ctrlreq.callback = store_cal_table;
 				udd_g_ctrlreq.over_under_run = 0;
+				return true;
+			}
+			// Set LEDs state
+			case 0x03: {
+				uint32_t state = udd_g_ctrlreq.req.wValue & 0x7;
+				if (hwversion[0] == 'D') {
+					pio_set_output(PIOB, PIO_PB15, (state & 0x4) ? LOW : HIGH, DISABLE, DISABLE);	// LED_RED
+					pio_set_output(PIOA, PIO_PA29, (state & 0x2) ? LOW : HIGH, DISABLE, DISABLE);	// LED_GREEN
+					pio_set_output(PIOA, PIO_PA28, (state & 0x1) ? LOW : HIGH, DISABLE, DISABLE);	// LED_BLUE
+				}
 				return true;
 			}
 			/// read ADM1177

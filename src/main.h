@@ -15,12 +15,6 @@ typedef enum chan_mode{
 	SIMV = 2,
 } chan_mode;
 
-typedef struct rgb {
-    uint8_t r;
-	uint8_t g;
-	uint8_t b;
-} rgb;
-
 uint16_t packets_in[2][1024];
 uint16_t packets_out[2][512];
 
@@ -61,8 +55,6 @@ void main_vendor_disable(void);
 void main_sof_action(void);
 
 void main_suspend_action(void);
-
-void h_to_rgb(uint8_t , rgb * c);
 
 void main_resume_action(void);
 

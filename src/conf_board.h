@@ -20,8 +20,4 @@
 #define IO3 (1<<3)
 #define PWR (1<<17)
 
-#define LED_B (1 << 28)
-#define LED_G (1 << 29)
-#define LED_R (1 << 15)
-
 #endif
