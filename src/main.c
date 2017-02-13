@@ -9,6 +9,11 @@ chan_mode ma = DISABLED;
 chan_mode mb = DISABLED;
 uint8_t not_a_new_transfer;
 
+#define CUSTOM_SERIAL_VALID	0x01ee02dd
+
+#define CUSTOM_SERIAL_VALID_OFFSET	220
+#define CUSTOM_SERIAL_OFFSET			224
+
 // default values for DAC, pots
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
 
@@ -46,10 +51,24 @@ static twi_options_t TWIM_CONFIG =
 
 void init_build_usb_serial_number(void) {
 	uint32_t uid[4];
+	uint32_t custom_serial_valid;
+
 	flash_read_unique_id(uid, 4);
-	for (uint8_t i = 0; i < 16; i++) {
-		serial_number[i*2+1] = "0123456789ABCDEF"[((uint8_t *)uid)[i]&0x0F];
-		serial_number[i*2] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
+
+	custom_serial_valid = (flash_table[CUSTOM_SERIAL_VALID_OFFSET + 0] << 24) |
+						 (flash_table[CUSTOM_SERIAL_VALID_OFFSET + 1] << 16) |
+						 (flash_table[CUSTOM_SERIAL_VALID_OFFSET + 2] << 8) |
+						 (flash_table[CUSTOM_SERIAL_VALID_OFFSET + 3] << 0);
+
+	if (custom_serial_valid == CUSTOM_SERIAL_VALID) {
+		for (uint8_t i = 0; i < 32; i++) {
+			serial_number[i] = flash_table[CUSTOM_SERIAL_OFFSET + i];
+		}
+	} else {
+		for (uint8_t i = 0; i < 16; i++) {
+			serial_number[i*2+1] = "0123456789ABCDEF"[((uint8_t *)uid)[i]&0x0F];
+			serial_number[i*2] = "0123456789ABCDEF"[(((uint8_t *)uid)[i]&0xF0) >> 4];
+		}
 	}
 }
 
@@ -364,16 +383,16 @@ static void get_hwversion(void)
 		hwversion[0] = 'E';
 }
 
-static void read_cal_table(void)
+static void read_flash_table(void)
 {
-	uint8_t *cal = (uint8_t *)CAL_TABLE_BASE;
+	uint8_t *cal = (uint8_t *)FLASH_TABLE_BASE;
 	uint16_t i;
 
 	for (i = 0; i < IFLASH0_PAGE_SIZE; i++)
-		cal_table[i] = cal[i];
+		flash_table[i] = cal[i];
 }
 
-static void store_cal_table(void)
+static void store_flash_table(void)
 {
 	uint32_t ret;
 
@@ -381,20 +400,22 @@ static void store_cal_table(void)
 	if (ret != FLASH_RC_OK)
 		return;
 
-	ret = flash_unlock(CAL_TABLE_BASE,
-					   CAL_TABLE_BASE + IFLASH0_PAGE_SIZE - 1, 0, 0);
+	ret = flash_unlock(FLASH_TABLE_BASE,
+					   FLASH_TABLE_BASE + IFLASH0_PAGE_SIZE - 1, 0, 0);
 	if (ret != FLASH_RC_OK)
 		return;
 
-	ret = flash_write(CAL_TABLE_BASE, cal_table,
+	ret = flash_write(FLASH_TABLE_BASE, flash_table,
 					  IFLASH0_PAGE_SIZE, 1);
 	if (ret != FLASH_RC_OK)
 		return;
 
-	ret = flash_lock(CAL_TABLE_BASE,
-					 CAL_TABLE_BASE + IFLASH0_PAGE_SIZE - 1, 0, 0);
+	ret = flash_lock(FLASH_TABLE_BASE,
+					 FLASH_TABLE_BASE + IFLASH0_PAGE_SIZE - 1, 0, 0);
 	if (ret != FLASH_RC_OK)
 		return;
+
+	init_build_usb_serial_number();
 }
 
 int main(void)
@@ -403,7 +424,7 @@ int main(void)
 	cpu_irq_enable();
 	sysclk_init();
 	get_hwversion();
-	read_cal_table();
+	read_flash_table();
 	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
 	// enable WDT for "fairly short"
@@ -549,16 +570,15 @@ bool main_setup_handle(void) {
 			}
 			// Read calibration table
 			case 0x01: {
-				ptr = (uint8_t*)&cal_table[udd_g_ctrlreq.req.wIndex];
+				ptr = (uint8_t*)&flash_table[udd_g_ctrlreq.req.wIndex];
 				size = udd_g_ctrlreq.req.wLength;
 				break;
 			}
 			// Write calibration table
 			case 0x02: {
-				//read_calib_coeff();
 				udd_g_ctrlreq.payload_size = udd_g_ctrlreq.req.wLength;
-				udd_g_ctrlreq.payload = (uint8_t*)&cal_table[udd_g_ctrlreq.req.wIndex];
-				udd_g_ctrlreq.callback = store_cal_table;
+				udd_g_ctrlreq.payload = (uint8_t*)&flash_table[udd_g_ctrlreq.req.wIndex];
+				udd_g_ctrlreq.callback = store_flash_table;
 				udd_g_ctrlreq.over_under_run = 0;
 				return true;
 			}
@@ -570,6 +590,14 @@ bool main_setup_handle(void) {
 					pio_set_output(PIOA, PIO_PA29, (state & 0x2) ? LOW : HIGH, DISABLE, DISABLE);	// LED_GREEN
 					pio_set_output(PIOA, PIO_PA28, (state & 0x1) ? LOW : HIGH, DISABLE, DISABLE);	// LED_BLUE
 				}
+				return true;
+			}
+			// Write serial number
+			case 0x05: {
+				udd_g_ctrlreq.payload_size = udd_g_ctrlreq.req.wLength;
+				udd_g_ctrlreq.payload = (uint8_t*)&flash_table[CUSTOM_SERIAL_VALID_OFFSET + udd_g_ctrlreq.req.wIndex];
+				udd_g_ctrlreq.callback = store_flash_table;
+				udd_g_ctrlreq.over_under_run = 0;
 				return true;
 			}
 			/// read ADM1177

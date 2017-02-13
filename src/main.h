@@ -7,7 +7,7 @@
 #define A 0
 #define B 1
 
-#define CAL_TABLE_BASE	IFLASH0_ADDR + IFLASH0_SIZE - IFLASH0_PAGE_SIZE
+#define FLASH_TABLE_BASE	IFLASH0_ADDR + IFLASH0_SIZE - IFLASH0_PAGE_SIZE
 
 typedef enum chan_mode{
 	DISABLED = 0,
@@ -26,7 +26,7 @@ typedef enum ch_params {
 	p2_simv = 4
 } ch_params;
 
-uint8_t cal_table[IFLASH0_PAGE_SIZE];
+uint8_t flash_table[IFLASH0_PAGE_SIZE];
 
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
 uint8_t slot_offset;
