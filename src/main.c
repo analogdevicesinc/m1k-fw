@@ -244,8 +244,17 @@ void init_hardware(void) {
 
 /// post-setup, write necessary configurations to hotswap and DAC
 void config_hardware() {
-	// status read
-	write_adm1177(0b01000000);
+	uint8_t adm_cfg[2];
+
+	// enable status read
+	adm_cfg[0] = 0x40;
+	write_adm1177(adm_cfg, 1);
+
+	// enable HS_ALERT and clear ALERT status bits
+	adm_cfg[0] = 0x81;
+	adm_cfg[1] = 0x14;
+	write_adm1177(adm_cfg, 2);
+
 	cpu_delay_us(100, F_CPU);
 	// DAC internal reference
 	write_ad5663(0xFF, 0xFFFF);
@@ -274,11 +283,11 @@ void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 }
 
 /// write controller register
-void write_adm1177(uint8_t v) {
+void write_adm1177(uint8_t* b, uint8_t ct) {
 	twi_packet_t p;
 	p.chip = 0x58; // 7b addr of '1177 w/ addr p grounded
-	p.length = 1;
-	p.buffer = &v;
+	p.length = ct;
+	p.buffer = b;
 	p.addr_length = 0;
 	twi_master_write(TWI0, &p);
 }
