@@ -427,6 +427,36 @@ static void store_flash_table(void)
 	init_build_usb_serial_number();
 }
 
+void get_sample_ad7682(uint8_t ch, uint8_t *cfg, uint8_t *data)
+{
+	uint8_t index;
+
+	pio_configure(PIOA, PIO_OUTPUT_0, CNV, PIO_DEFAULT);
+
+	// Two dummy conversions are required to update CFG register
+	for(index = 0; index < 3; index++) {
+		PIOA->PIO_SODR = CNV;
+		cpu_delay_us(1, F_CPU);
+		PIOA->PIO_CODR = CNV;
+		cpu_delay_us(2, F_CPU);
+		if (ch == A) {
+			USART1->US_TPR = (uint32_t)(&cfg[0]);
+			USART1->US_RPR = (uint32_t)(&data[0]);
+			USART1->US_RCR = 2;
+			USART1->US_TCR = 2;
+			while(!((USART1->US_CSR&US_CSR_ENDRX) > 0));
+		} else {
+			USART2->US_TPR = (uint32_t)(&cfg[0]);
+			USART2->US_RPR = (uint32_t)(&data[0]);
+			USART2->US_RCR = 2;
+			USART2->US_TCR = 2;
+			while(!((USART2->US_CSR&US_CSR_ENDRX) > 0));
+		}
+	}
+
+	pio_configure(PIOA, PIO_PERIPH_B, CNV, PIO_DEFAULT);
+}
+
 int main(void)
 {
 	irq_initialize_vectors();
@@ -613,6 +643,14 @@ bool main_setup_handle(void) {
 			case 0x17: {
 				size = udd_g_ctrlreq.req.wIndex&0xFF;
 				read_adm1177((uint8_t*)(&ret_data), size);
+				ptr = (uint8_t*)&ret_data;
+				break;
+			}
+			// Get raw temperature value
+			case 0x19: {
+				uint8_t cfg[2] = {0xB1, 0x20};
+				size = 2;
+				get_sample_ad7682(udd_g_ctrlreq.req.wValue & 0x1, cfg, (uint8_t*)(&ret_data));
 				ptr = (uint8_t*)&ret_data;
 				break;
 			}

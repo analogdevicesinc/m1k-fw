@@ -70,6 +70,7 @@ void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2);
 void write_adm1177(uint8_t* b, uint8_t ct);
 void write_ad5663(uint8_t conf, uint16_t data);
 void read_adm1177(uint8_t b[], uint8_t c);
+void get_sample_ad7682(uint8_t ch, uint8_t *cfg, uint8_t *data);
 void set_mode(uint32_t chan, chan_mode m);
 
 void main_vendor_bulk_out_received(udd_ep_status_t status, iram_size_t nb_transfered, udd_ep_id_t ep);
