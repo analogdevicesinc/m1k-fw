@@ -141,6 +141,9 @@ void TC2_Handler(void) {
 
 /// initialise SAM subsystems for M1K operation
 void init_hardware(void) {
+	uint8_t adc_cfg[2];
+	uint8_t adc_dummy[2];
+
 // enable peripheral clock access
 	pmc_enable_periph_clk(ID_PIOA);
 	pmc_enable_periph_clk(ID_PIOB);
@@ -240,6 +243,15 @@ void init_hardware(void) {
 	tc_enable_interrupt(TC0, 2, TC_IER_CPCS);
 	NVIC_SetPriority(TC2_IRQn, 0);
 	NVIC_EnableIRQ(TC2_IRQn);
+
+	cpu_delay_ms(500, F_CPU);
+	// ADC internal reference
+	adc_cfg[0] = 0xF1;
+	get_sample_ad7682(0x0, adc_cfg, adc_dummy);
+	adc_cfg[0] = 0xF7;
+	get_sample_ad7682(0x1, adc_cfg, adc_dummy);
+	// DAC internal reference
+	write_ad5663(0xFF, 0xFFFF);
 }
 
 /// post-setup, write necessary configurations to hotswap and DAC
@@ -466,10 +478,10 @@ int main(void)
 	read_flash_table();
 	// convert chip UID to ascii string of hex representation
 	init_build_usb_serial_number();
-	// enable WDT for "fairly short"
-	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
 	// setup peripherals
 	init_hardware();
+	// enable WDT for "fairly short"
+	wdt_init(WDT, WDT_MR_WDRSTEN, 50, 50);
 
 	// start USB
 	cpu_delay_us(100, F_CPU);
@@ -649,8 +661,15 @@ bool main_setup_handle(void) {
 			// Get raw temperature value
 			case 0x19: {
 				uint8_t cfg[2] = {0xB1, 0x20};
+				uint8_t dummy[2];
 				size = 2;
-				get_sample_ad7682(udd_g_ctrlreq.req.wValue & 0x1, cfg, (uint8_t*)(&ret_data));
+				get_sample_ad7682(udd_g_ctrlreq.req.wValue & 0x1, cfg, ret_data);
+				get_sample_ad7682(udd_g_ctrlreq.req.wValue & 0x1, cfg, ret_data);
+				if ((udd_g_ctrlreq.req.wValue & 0x1) == A)
+					cfg[0] = 0xF1;
+				else
+					cfg[0] = 0xF7;
+				get_sample_ad7682(udd_g_ctrlreq.req.wValue & 0x1, cfg, dummy);
 				ptr = (uint8_t*)&ret_data;
 				break;
 			}
