@@ -78,18 +78,16 @@ void TC2_Handler(void) {
 	PIOA->PIO_SODR = N_SYNC;
 	switch (current_chan) {
 		case A: {
-			slot_offset -= 2;
 			USART1->US_TPR = (uint32_t)(&v_adc_conf);
-			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+0]);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+0]);
 			USART2->US_TPR = (uint32_t)(&i_adc_conf);
-			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+1]);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+1]);
 			USART1->US_RCR = 2;
 			USART1->US_TCR = 2;
 			USART2->US_RCR = 2;
 			USART2->US_TCR = 2;
-			slot_offset += 2;
 			USART0->US_TPR = (uint32_t)(&da);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+0]);
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset_out*2+0]);
 			current_chan ^= true;
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
@@ -97,24 +95,23 @@ void TC2_Handler(void) {
 			break;
 		}
 		case B: {
-			slot_offset -= 2;
 			USART1->US_TPR = (uint32_t)(&i_adc_conf);
-			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+3]);
+			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+3]);
 			USART2->US_TPR = (uint32_t)(&v_adc_conf);
-			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset*4+2]);
+			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+2]);
 			USART1->US_TCR = 2;
 			USART1->US_RCR = 2;
 			USART2->US_TCR = 2;
 			USART2->US_RCR = 2;
-			slot_offset += 2;
 			USART0->US_TPR = (uint32_t)(&db);
-			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset*2+1]);
+			USART0->US_TNPR = (uint32_t)(&packets_out[packet_index_out][slot_offset_out*2+1]);
 			current_chan ^= true;
 			PIOA->PIO_CODR = N_SYNC;
 			USART0->US_TCR = 1;
 			USART0->US_TNCR = 2;
-			slot_offset += 1;
-			switch (slot_offset) {
+			slot_offset_in += 1;
+			slot_offset_out += 1;
+			switch (slot_offset_out) {
 				case 0: {
 					packet_index_send_in = packet_index_in;
 					packet_index_out ^= 1;
@@ -126,7 +123,8 @@ void TC2_Handler(void) {
 					break;
 				}
 				case 4: {
-					slot_offset -= not_a_new_transfer;
+					slot_offset_out -= not_a_new_transfer;
+					slot_offset_in -= not_a_new_transfer;
 					not_a_new_transfer = 0;
 					break;
 				}
@@ -740,14 +738,15 @@ bool main_setup_handle(void) {
 					sent_in = false;
 					sending_in = false;
 					send_in = false;
-					slot_offset = 0;
+					slot_offset_in = 254;
+					slot_offset_out = 0;
 					packet_index_in = 0;
 					packet_index_out = 0;
 					packet_index_send_out = 0;
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, 10);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-28);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-32);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
 					start_frame = udd_g_ctrlreq.req.wIndex;
 					sent_out = false;

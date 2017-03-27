@@ -29,7 +29,8 @@ typedef enum ch_params {
 uint8_t flash_table[IFLASH0_PAGE_SIZE];
 
 uint8_t serial_number[USB_DEVICE_GET_SERIAL_NAME_LENGTH];
-uint8_t slot_offset;
+uint8_t slot_offset_in;
+uint8_t slot_offset_out;
 uint32_t packet_index_in;
 uint32_t packet_index_out;
 volatile uint32_t packet_index_send_in;
