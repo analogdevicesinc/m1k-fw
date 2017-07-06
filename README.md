@@ -33,7 +33,7 @@ Unfortunately, Windows does not offer the ability for userspace programs to
 detatch kernel drivers, so the device must be interacted with as a serial
 device.
 
-[BOSSA](www.shumatech.com/web/products/bossa) is a third-party open-source
+[BOSSA](http://www.shumatech.com/web/products/bossa) is a third-party open-source
 cross-platform tool which implements the required serial protocol and works
 around the afforementioned bugs. Install the latest version from
 [SourceForge](http://sourceforge.net/projects/b-o-s-s-a/files/) and follow the
