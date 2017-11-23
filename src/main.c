@@ -164,6 +164,10 @@ void init_hardware(void) {
 		pio_set_output(PIOB, PIO_PB15, HIGH, DISABLE, DISABLE);	// LED_RED
 		pio_set_output(PIOA, PIO_PA29, LOW, DISABLE, DISABLE);	// LED_GREEN
 		pio_set_output(PIOA, PIO_PA28, HIGH, DISABLE, DISABLE);	// LED_BLUE
+	} else {
+		pio_set_output(PIOA, PIO_PA1, HIGH, DISABLE, DISABLE);	// LED_RED_DS3
+		pio_set_output(PIOA, PIO_PA2, HIGH, DISABLE, DISABLE);	// LED_RED_DS2
+		pio_set_output(PIOA, PIO_PA0, LOW, DISABLE, DISABLE);	// LED_RED_DS1
 	}
 
 	pio_configure(PIOB, PIO_OUTPUT_1, PWR, PIO_DEFAULT);
@@ -399,7 +403,7 @@ static void get_hwversion(void)
 
 	pin_value = pio_get_pin_value(PIO_PB21_IDX);
 	if (!pin_value)
-		hwversion[0] = 'E';
+		hwversion[0] = 'F';
 }
 
 static void read_flash_table(void)
@@ -638,6 +642,10 @@ bool main_setup_handle(void) {
 					pio_set_output(PIOB, PIO_PB15, (state & 0x4) ? LOW : HIGH, DISABLE, DISABLE);	// LED_RED
 					pio_set_output(PIOA, PIO_PA29, (state & 0x2) ? LOW : HIGH, DISABLE, DISABLE);	// LED_GREEN
 					pio_set_output(PIOA, PIO_PA28, (state & 0x1) ? LOW : HIGH, DISABLE, DISABLE);	// LED_BLUE
+				} else {
+					pio_set_output(PIOA, PIO_PA1, (state & 0x4) ? LOW : HIGH, DISABLE, DISABLE);	// LED_RED_DS3
+					pio_set_output(PIOA, PIO_PA2, (state & 0x2) ? LOW : HIGH, DISABLE, DISABLE);	// LED_RED_DS2
+					pio_set_output(PIOA, PIO_PA0, (state & 0x1) ? LOW : HIGH, DISABLE, DISABLE);	// LED_RED_DS1
 				}
 				return true;
 			}
