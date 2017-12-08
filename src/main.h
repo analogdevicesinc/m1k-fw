@@ -15,7 +15,7 @@ typedef enum chan_mode{
 	SIMV = 2,
 } chan_mode;
 
-uint16_t packets_in[2][1024];
+uint16_t packets_in[2][1024+1];
 uint16_t packets_out[2][512];
 
 typedef enum ch_params {

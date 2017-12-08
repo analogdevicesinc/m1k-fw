@@ -299,7 +299,10 @@ void write_ad5122(uint32_t ch, uint8_t r1, uint8_t r2) {
 /// write controller register
 void write_adm1177(uint8_t* b, uint8_t ct) {
 	twi_packet_t p;
-	p.chip = 0x58; // 7b addr of '1177 w/ addr p grounded
+	if (hwversion[0] == 'D')
+		p.chip = 0x58;
+	else
+		p.chip = 0x72;
 	p.length = ct;
 	p.buffer = b;
 	p.addr_length = 0;
@@ -309,7 +312,10 @@ void write_adm1177(uint8_t* b, uint8_t ct) {
 /// read controller register
 void read_adm1177(uint8_t* b, uint8_t ct) {
 	twi_packet_t p;
-	p.chip = 0x58;
+	if (hwversion[0] == 'D')
+		p.chip = 0x58;
+	else
+		p.chip = 0x72;
 	p.length = ct;
 	p.buffer = b;
 	p.addr_length = 0;
@@ -754,7 +760,7 @@ bool main_setup_handle(void) {
 					packet_index_send_in = 0;
 					// so much
 					tc_write_ra(TC0, 2, 10);
-					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-32);
+					tc_write_rb(TC0, 2, udd_g_ctrlreq.req.wValue-30);
 					tc_write_rc(TC0, 2, udd_g_ctrlreq.req.wValue);
 					start_frame = udd_g_ctrlreq.req.wIndex;
 					sent_out = false;
