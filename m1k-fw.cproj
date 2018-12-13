@@ -1,0 +1,689 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>7.0</ProjectVersion>
+    <ToolchainName>com.Atmel.ARMGCC.C</ToolchainName>
+    <avrdevice>ATSAM3U2C</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <OutputType>Executable</OutputType>
+    <Language>C</Language>
+    <Name>m1k-fw</Name>
+    <RootNamespace>m1k-fw</RootNamespace>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <CacheFlash>true</CacheFlash>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
+    <UncachedRange />
+    <preserveEEPROM>true</preserveEEPROM>
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
+    <BootSegment>2</BootSegment>
+    <ResetRule>0</ResetRule>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <EraseKey />
+    <AsfFrameworkConfig>
+      <framework-data xmlns="">
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.40.0" />
+        </dependencies>
+      </framework-data>
+    </AsfFrameworkConfig>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainSettings>
+      <ArmGcc>
+  <armgcc.common.outputfiles.hex>True</armgcc.common.outputfiles.hex>
+  <armgcc.common.outputfiles.lss>True</armgcc.common.outputfiles.lss>
+  <armgcc.common.outputfiles.eep>True</armgcc.common.outputfiles.eep>
+  <armgcc.common.outputfiles.bin>True</armgcc.common.outputfiles.bin>
+  <armgcc.common.outputfiles.srec>True</armgcc.common.outputfiles.srec>
+  <armgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>NDEBUG</Value>
+    </ListValues>
+  </armgcc.compiler.symbols.DefSymbols>
+  <armgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3U_DFP\1.0.49\include</Value>
+    </ListValues>
+  </armgcc.compiler.directories.IncludePaths>
+  <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
+  <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+  <armgcc.linker.libraries.LibrarySearchPaths>
+    <ListValues>
+      <Value>%24(ProjectDir)\Device_Startup</Value>
+    </ListValues>
+  </armgcc.linker.libraries.LibrarySearchPaths>
+  <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
+  <armgcc.linker.miscellaneous.LinkerFlags>-Tsam3u2c_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
+  <armgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3U_DFP\1.0.49\include</Value>
+    </ListValues>
+  </armgcc.assembler.general.IncludePaths>
+  <armgcc.preprocessingassembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3U_DFP\1.0.49\include</Value>
+    </ListValues>
+  </armgcc.preprocessingassembler.general.IncludePaths>
+</ArmGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainSettings>
+      <ArmGcc>
+  <armgcc.common.outputfiles.hex>True</armgcc.common.outputfiles.hex>
+  <armgcc.common.outputfiles.lss>True</armgcc.common.outputfiles.lss>
+  <armgcc.common.outputfiles.eep>True</armgcc.common.outputfiles.eep>
+  <armgcc.common.outputfiles.bin>True</armgcc.common.outputfiles.bin>
+  <armgcc.common.outputfiles.srec>True</armgcc.common.outputfiles.srec>
+  <armgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>DEBUG</Value>
+    </ListValues>
+  </armgcc.compiler.symbols.DefSymbols>
+  <armgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3U_DFP\1.0.49\include</Value>
+    </ListValues>
+  </armgcc.compiler.directories.IncludePaths>
+  <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
+  <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
+  <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+  <armgcc.linker.libraries.LibrarySearchPaths>
+    <ListValues>
+      <Value>%24(ProjectDir)\Device_Startup</Value>
+    </ListValues>
+  </armgcc.linker.libraries.LibrarySearchPaths>
+  <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
+  <armgcc.linker.miscellaneous.LinkerFlags>-Tsam3u2c_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
+  <armgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3U_DFP\1.0.49\include</Value>
+    </ListValues>
+  </armgcc.assembler.general.IncludePaths>
+  <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
+  <armgcc.preprocessingassembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAM3U_DFP\1.0.49\include</Value>
+    </ListValues>
+  </armgcc.preprocessingassembler.general.IncludePaths>
+  <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
+</ArmGcc>
+    </ToolchainSettings>
+    <UsesExternalMakeFile>True</UsesExternalMakeFile>
+    <OutputDirectory>
+    </OutputDirectory>
+    <BuildTarget>all</BuildTarget>
+    <CleanTarget>clean</CleanTarget>
+    <ExternalMakeFilePath>Makefile</ExternalMakeFilePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="asf\sam\utils\linker_scripts\sam3u\sam3u2\gcc\flash.ld">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="asf\sam\utils\make\Makefile.sam.in">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="asf\thirdparty\CMSIS\ATMEL-disclaimer.txt">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="asf\thirdparty\CMSIS\CMSIS END USER LICENCE AGREEMENT.pdf">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="asf\thirdparty\CMSIS\Lib\GCC\libarm_cortexM3l_math.a">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="asf\thirdparty\CMSIS\license.txt">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="asf\thirdparty\CMSIS\README.txt">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="Makefile">
+      <SubType>compile</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="asf\" />
+    <Folder Include="asf\common\" />
+    <Folder Include="asf\common\boards\" />
+    <Folder Include="asf\common\boards\user_board\" />
+    <Folder Include="asf\common\services\" />
+    <Folder Include="asf\common\services\clock\" />
+    <Folder Include="asf\common\services\clock\sam3u\" />
+    <Folder Include="asf\common\services\delay\" />
+    <Folder Include="asf\common\services\delay\sam\" />
+    <Folder Include="asf\common\services\ioport\" />
+    <Folder Include="asf\common\services\ioport\sam\" />
+    <Folder Include="asf\common\services\sleepmgr\" />
+    <Folder Include="asf\common\services\sleepmgr\sam\" />
+    <Folder Include="asf\common\services\usb\" />
+    <Folder Include="asf\common\services\usb\class\" />
+    <Folder Include="asf\common\services\usb\class\vendor\" />
+    <Folder Include="asf\common\services\usb\class\vendor\device\" />
+    <Folder Include="asf\common\services\usb\udc\" />
+    <Folder Include="asf\common\utils\" />
+    <Folder Include="asf\common\utils\interrupt\" />
+    <Folder Include="asf\sam\" />
+    <Folder Include="asf\sam\drivers\" />
+    <Folder Include="asf\sam\drivers\efc\" />
+    <Folder Include="asf\sam\drivers\pio\" />
+    <Folder Include="asf\sam\drivers\pmc\" />
+    <Folder Include="asf\sam\drivers\pwm\" />
+    <Folder Include="asf\sam\drivers\tc\" />
+    <Folder Include="asf\sam\drivers\tc\tc_capture_waveform_example\" />
+    <Folder Include="asf\sam\drivers\twi\" />
+    <Folder Include="asf\sam\drivers\udphs\" />
+    <Folder Include="asf\sam\drivers\usart\" />
+    <Folder Include="asf\sam\drivers\wdt\" />
+    <Folder Include="asf\sam\services\" />
+    <Folder Include="asf\sam\services\flash_efc\" />
+    <Folder Include="asf\sam\utils\" />
+    <Folder Include="asf\sam\utils\cmsis\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\include\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\include\component\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\include\instance\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\include\pio\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\include\sam3u4e.h\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\source\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\source\templates\" />
+    <Folder Include="asf\sam\utils\cmsis\sam3u\source\templates\gcc\" />
+    <Folder Include="asf\sam\utils\header_files\" />
+    <Folder Include="asf\sam\utils\linker_scripts\" />
+    <Folder Include="asf\sam\utils\linker_scripts\sam3u\" />
+    <Folder Include="asf\sam\utils\linker_scripts\sam3u\sam3u2\" />
+    <Folder Include="asf\sam\utils\linker_scripts\sam3u\sam3u2\gcc\" />
+    <Folder Include="asf\sam\utils\make\" />
+    <Folder Include="asf\sam\utils\preprocessor\" />
+    <Folder Include="asf\sam\utils\syscalls\" />
+    <Folder Include="asf\sam\utils\syscalls\gcc\" />
+    <Folder Include="asf\thirdparty\" />
+    <Folder Include="asf\thirdparty\CMSIS\" />
+    <Folder Include="asf\thirdparty\CMSIS\Include\" />
+    <Folder Include="asf\thirdparty\CMSIS\Lib\" />
+    <Folder Include="asf\thirdparty\CMSIS\Lib\GCC\" />
+    <Folder Include="src\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="asf\common\boards\board.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\boards\user_board\init.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\boards\user_board\user_board.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\genclk.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\osc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\pll.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\sam3u\genclk.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\sam3u\osc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\sam3u\pll.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\sam3u\sysclk.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\sam3u\sysclk.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\clock\sysclk.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\delay\delay.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\delay\sam\cycle_counter.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\delay\sam\cycle_counter.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\ioport\ioport.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\ioport\sam\ioport_pio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\sleepmgr\sam\sleepmgr.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\sleepmgr\sam\sleepmgr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\sleepmgr\sleepmgr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\class\vendor\device\udi_vendor.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\class\vendor\device\udi_vendor.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\class\vendor\device\udi_vendor_conf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\class\vendor\device\udi_vendor_desc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\class\vendor\usb_protocol_vendor.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\udc\udc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\udc\udc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\udc\udc_desc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\udc\udd.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\udc\udi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\usb_atmel.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\services\usb\usb_protocol.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\utils\interrupt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\utils\interrupt\interrupt_sam_nvic.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\utils\interrupt\interrupt_sam_nvic.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\common\utils\parts.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\efc\efc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\efc\efc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pio\pio.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pio\pio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pio\pio_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pio\pio_handler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pmc\pmc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pmc\pmc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pmc\sleep.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pmc\sleep.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pwm\pwm.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\pwm\pwm.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\tc\tc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\tc\tc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\tc\tc_capture_waveform_example\tc_capture_waveform_example.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\twi\twi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\twi\twi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\udphs\udphs_device.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\udphs\udphs_device.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\usart\usart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\usart\usart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\wdt\wdt.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\drivers\wdt\wdt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\services\flash_efc\flash_efc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\services\flash_efc\flash_efc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_adc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_adc12b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_chipid.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_dmac.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_efc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_gpbr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_hsmci.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_matrix.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_pdc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_pio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_pmc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_pwm.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_rstc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_rtc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_rtt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_smc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_spi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_ssc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_supc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_tc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_twi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_uart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_udphs.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_usart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\component\component_wdt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_adc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_adc12b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_chipid.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_dmac.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_efc0.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_efc1.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_gpbr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_hsmci.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_matrix.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_pioa.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_piob.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_pioc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_pmc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_pwm.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_rstc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_rtc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_rtt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_smc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_spi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_ssc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_supc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_tc0.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_twi0.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_twi1.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_uart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_udphs.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_usart0.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_usart1.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_usart2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_usart3.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\instance\instance_wdt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\pio\pio_sam3u1c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\pio\pio_sam3u1e.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\pio\pio_sam3u2c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\pio\pio_sam3u2e.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\pio\pio_sam3u4c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\pio\pio_sam3u4e.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u1c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u1e.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u2c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u2e.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u4c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\include\sam3u4e.h\sam3u4e.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\source\templates\exceptions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\source\templates\exceptions.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\source\templates\gcc\startup_sam3u.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\source\templates\system_sam3u.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\cmsis\sam3u\source\templates\system_sam3u.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\compiler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\header_files\io.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\preprocessor\mrepeat.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\preprocessor\preprocessor.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\preprocessor\stringz.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\preprocessor\tpaste.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\status_codes.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\sam\utils\syscalls\gcc\syscalls.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\thirdparty\CMSIS\Include\arm_common_tables.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\thirdparty\CMSIS\Include\core_cm3.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\thirdparty\CMSIS\Include\core_cmFunc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="asf\thirdparty\CMSIS\Include\core_cmInstr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\asf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\conf_board.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\conf_clock.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\conf_sleepmgr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\conf_usb.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\main.h">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
+</Project>
