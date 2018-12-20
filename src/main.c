@@ -685,6 +685,26 @@ bool main_setup_handle(void) {
 				ptr = (uint8_t*)&ret_data;
 				break;
 			}
+			// Set ADC 1 configure register variable
+			case 0x20: {
+				v_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F1;
+				break;
+			}
+			// Set ADC 2 configure register variable
+			case 0x21: {
+				i_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F7;
+				break;
+			}
+			// Set DAC a configure register variable
+			case 0x22: {
+				da = udd_g_ctrlreq.req.wValue; // default 0;
+				break;
+			}
+			// Set DAC b configure register variable
+			case 0x23: {
+				db = udd_g_ctrlreq.req.wValue; // default 1;
+				break;
+			}
 			/// Set pin 0
 			case 0x50: {
 				int32_t low = udd_g_ctrlreq.req.wValue & 0x1F;
