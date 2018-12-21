@@ -1,0 +1,22 @@
+language: c
+sudo: required
+
+matrix:
+  include:
+    - compiler: "gcc"
+      os: linux
+      dist: xenial
+
+addons:
+  artifacts: true
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./ci/travis/before_install_linux ; fi
+
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./ci/travis/make_linux ; fi
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always
