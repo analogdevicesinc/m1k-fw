@@ -18,8 +18,10 @@ uint8_t not_a_new_transfer;
 uint16_t def_data[5] = {26600, 0, 0, 0x30, 0x40};
 
 // reversed endianness from AD7682 datasheet
-uint16_t v_adc_conf = 0x20F1;
-uint16_t i_adc_conf = 0x20F7;
+uint16_t v1_adc_conf = 0x20F1;
+uint16_t i1_adc_conf = 0x20F7;
+uint16_t v2_adc_conf = 0x20F7;
+uint16_t i2_adc_conf = 0x20F1;
 
 uint8_t da = 0;
 uint8_t db = 1;
@@ -78,9 +80,9 @@ void TC2_Handler(void) {
 	PIOA->PIO_SODR = N_SYNC;
 	switch (current_chan) {
 		case A: {
-			USART1->US_TPR = (uint32_t)(&v_adc_conf);
+			USART1->US_TPR = (uint32_t)(&v1_adc_conf);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+0]);
-			USART2->US_TPR = (uint32_t)(&i_adc_conf);
+			USART2->US_TPR = (uint32_t)(&v2_adc_conf);
 			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+1]);
 			USART1->US_RCR = 2;
 			USART1->US_TCR = 2;
@@ -95,9 +97,9 @@ void TC2_Handler(void) {
 			break;
 		}
 		case B: {
-			USART1->US_TPR = (uint32_t)(&i_adc_conf);
+			USART1->US_TPR = (uint32_t)(&i1_adc_conf);
 			USART1->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+3]);
-			USART2->US_TPR = (uint32_t)(&v_adc_conf);
+			USART2->US_TPR = (uint32_t)(&i2_adc_conf);
 			USART2->US_RPR = (uint32_t)(&packets_in[packet_index_in][slot_offset_in*4+2]);
 			USART1->US_TCR = 2;
 			USART1->US_RCR = 2;
@@ -687,12 +689,14 @@ bool main_setup_handle(void) {
 			}
 			// Set ADC 1 configure register variable
 			case 0x20: {
-				v_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F1;
+				v1_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F1;
+				i1_adc_conf = udd_g_ctrlreq.req.wIndex; // default 0x20F7;
 				break;
 			}
 			// Set ADC 2 configure register variable
 			case 0x21: {
-				i_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F7;
+				v2_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F7;
+				i2_adc_conf = udd_g_ctrlreq.req.wIndex; // default 0x20F1;
 				break;
 			}
 			// Set DAC a configure register variable
