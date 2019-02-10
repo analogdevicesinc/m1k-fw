@@ -687,25 +687,33 @@ bool main_setup_handle(void) {
 				ptr = (uint8_t*)&ret_data;
 				break;
 			}
-			// Set ADC 1 configure register variable
+			// Set ADC V1 configure register variable
 			case 0x20: {
 				v1_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F1;
-				i1_adc_conf = udd_g_ctrlreq.req.wIndex; // default 0x20F7;
 				break;
 			}
-			// Set ADC 2 configure register variable
+			// Set ADC I1 configure register variable
 			case 0x21: {
+				i1_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F7;
+				break;
+			}
+			// Set ADC V2 configure register variable
+			case 0x22: {
 				v2_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F7;
-				i2_adc_conf = udd_g_ctrlreq.req.wIndex; // default 0x20F1;
+				break;
+			}
+			// Set ADC I2 configure register variable
+			case 0x23: {
+				i2_adc_conf = udd_g_ctrlreq.req.wValue; // default 0x20F1;
 				break;
 			}
 			// Set DAC a configure register variable
-			case 0x22: {
+			case 0x24: {
 				da = udd_g_ctrlreq.req.wValue; // default 0;
 				break;
 			}
 			// Set DAC b configure register variable
-			case 0x23: {
+			case 0x25: {
 				db = udd_g_ctrlreq.req.wValue; // default 1;
 				break;
 			}
