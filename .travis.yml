@@ -11,6 +11,10 @@ matrix:
       os: linux
       env:
         - BUILD_TYPE=cppcheck
+    - compiler: "gcc"
+      os: linux
+      env:
+        - BUILD_TYPE=astyle
 
 addons:
   artifacts: true
