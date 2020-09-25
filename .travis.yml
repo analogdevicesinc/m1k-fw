@@ -7,6 +7,10 @@ matrix:
       os: linux
       env:
         - BUILD_TYPE=m1k_make
+    - compiler: "gcc"
+      os: linux
+      env:
+        - BUILD_TYPE=cppcheck
 
 addons:
   artifacts: true
