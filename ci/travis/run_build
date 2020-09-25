@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+sudo apt-get update
+
+build_m1k_make() {
+	sudo apt-get install -y gcc-arm-none-eabi \
+		libstdc++-arm-none-eabi-newlib
+	make
+}
+
+build_${BUILD_TYPE}
