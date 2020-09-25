@@ -5,16 +5,14 @@ matrix:
   include:
     - compiler: "gcc"
       os: linux
-      dist: xenial
+      env:
+        - BUILD_TYPE=m1k_make
 
 addons:
   artifacts: true
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./ci/travis/before_install_linux ; fi
-
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./ci/travis/make_linux ; fi
+  - ./ci/travis/run_build
 
 notifications:
   email:

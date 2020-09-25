@@ -1,9 +1,0 @@
-#!/bin/sh -xe
-
-handle_default() {
-	make
-}
-
-BUILD_TYPE=${BUILD_TYPE:-default}
-
-handle_${BUILD_TYPE}
