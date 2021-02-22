@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/AnalogDevices/OpenSource/_apis/build/status/analogdevicesinc.m1k-fw?branchName=master)](https://dev.azure.com/AnalogDevices/OpenSource/_build/latest?definitionId=21&branchName=master)
+
 This is the firmware for the microcontroller on the M1K.
 
 Unless you are an advanced user, you should probably start at the [Table of
