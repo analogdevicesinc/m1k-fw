@@ -20,7 +20,7 @@ addons:
   artifacts: true
 
 script:
-  - ./ci/travis/run_build
+  - ./ci/run_build
 
 notifications:
   email:

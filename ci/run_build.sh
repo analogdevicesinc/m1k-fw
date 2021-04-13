@@ -5,7 +5,7 @@ TOP_DIR="$(pwd)"
 
 sudo apt-get update
 
-. ./ci/travis/lib.sh
+. ./ci/lib.sh
 
 build_m1k_make() {
 	sudo apt-get install -y gcc-arm-none-eabi \
